@@ -26,7 +26,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Boilerplate Dashboard",
+	title: {
+		default: "Next.js Dashboard",
+		template: "%s | Next.js Dashboard"
+	},
 	description: "A boilerplate dashboard built with Next.js, React, and TypeScript."
 };
 

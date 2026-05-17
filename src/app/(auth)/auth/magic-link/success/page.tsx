@@ -3,6 +3,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 import { route } from "@/routes/routes";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Magic Link Success",
+	description: "Magic link success page of the Next.js boilerplate."
+};
 
 export default function MagicLinkSuccessPage() {
 	return (
@@ -13,7 +19,8 @@ export default function MagicLinkSuccessPage() {
 						Magic link could not be verified
 					</h1>
 					<p className="text-muted-foreground text-sm leading-6">
-						The link may have expired or already been used. Request a fresh sign-in link to continue.
+						The link may have expired or already been used. Request a fresh sign-in link to
+						continue.
 					</p>
 				</div>
 				<Button asChild className="h-11 w-full rounded-xl">
