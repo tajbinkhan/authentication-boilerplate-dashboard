@@ -1,26 +1,14 @@
 "use client";
 
-import { ComputerRemoveIcon, ShieldBanIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { DataTableColumnHeader } from "@/components/common/table/data-table-column-header";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogMedia,
-	AlertDialogTitle,
-	AlertDialogTrigger
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { Session, SessionStatus } from "@/features/sessions/types/sessions.types";
 import { formatSessionDate, getSessionDeviceIcon } from "@/features/sessions/utils/session-format";
+
+import { SessionDataTableRowActions } from "./session-data-table-row-actions";
 
 const statusLabels: Record<SessionStatus, string> = {
 	active: "Active",
@@ -29,18 +17,12 @@ const statusLabels: Record<SessionStatus, string> = {
 };
 
 interface SessionColumnsOptions {
-	pendingSessionId?: string;
-	isAnyMutationPending: boolean;
-	onRevoke: (session: Session) => void;
 	sort: string;
 	dir: "asc" | "desc";
 	handleSorting: (sort: string, dir: "asc" | "desc") => void;
 }
 
 export function createSessionColumns({
-	pendingSessionId,
-	isAnyMutationPending,
-	onRevoke,
 	sort,
 	dir,
 	handleSorting
@@ -131,14 +113,7 @@ export function createSessionColumns({
 		{
 			id: "actions",
 			header: "Action",
-			cell: ({ row }) => (
-				<SessionRevokeDialog
-					session={row.original}
-					isPending={pendingSessionId === row.original.id}
-					disabled={isAnyMutationPending}
-					onConfirm={() => onRevoke(row.original)}
-				/>
-			)
+			cell: ({ row }) => <SessionDataTableRowActions session={row.original} />
 		}
 	];
 }
@@ -164,52 +139,4 @@ function SessionStatusBadge({ status }: { status: SessionStatus }) {
 		status === "active" ? "default" : status === "revoked" ? "destructive" : "secondary";
 
 	return <Badge variant={variant}>{statusLabels[status]}</Badge>;
-}
-
-function SessionRevokeDialog({
-	session,
-	isPending,
-	disabled,
-	onConfirm
-}: {
-	session: Session;
-	isPending: boolean;
-	disabled: boolean;
-	onConfirm: () => void;
-}) {
-	if (session.status !== "active") {
-		return <span className="text-muted-foreground text-sm">No action</span>;
-	}
-
-	return (
-		<AlertDialog>
-			<AlertDialogTrigger asChild>
-				<Button variant="destructive" size="sm" disabled={disabled}>
-					<HugeiconsIcon icon={ComputerRemoveIcon} data-icon="inline-start" />
-					{isPending ? "Revoking" : "Revoke"}
-				</Button>
-			</AlertDialogTrigger>
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogMedia>
-						<HugeiconsIcon icon={ShieldBanIcon} />
-					</AlertDialogMedia>
-					<AlertDialogTitle>
-						{session.isCurrent ? "Revoke your current session?" : "Revoke this session?"}
-					</AlertDialogTitle>
-					<AlertDialogDescription>
-						{session.isCurrent
-							? "This will sign you out on this device and send you back to login."
-							: `This will sign out ${session.deviceName} from your account.`}
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel>Cancel</AlertDialogCancel>
-					<AlertDialogAction variant="destructive" onClick={onConfirm}>
-						Revoke session
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
-	);
 }

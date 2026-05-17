@@ -14,10 +14,7 @@ import { SessionsDataTableToolbar } from "./sessions-data-table-toolbar";
 interface SessionsTableProps {
 	sessions?: Session[];
 	isLoading?: boolean;
-	pendingSessionId?: string;
-	isAnyMutationPending?: boolean;
 	activeOtherSessionCount?: number;
-	onRevoke?: (session: Session) => void;
 	onRefresh?: () => void;
 	onRevokeOtherSessions?: () => void;
 	isRefreshing?: boolean;
@@ -25,9 +22,6 @@ interface SessionsTableProps {
 }
 
 export function SessionsTable({
-	pendingSessionId,
-	isAnyMutationPending,
-	onRevoke,
 	onRevokeOtherSessions,
 	isRevokeOtherSessionsPending
 }: SessionsTableProps) {
@@ -46,14 +40,11 @@ export function SessionsTable({
 	const columns = useMemo(
 		() =>
 			createSessionColumns({
-				pendingSessionId,
-				isAnyMutationPending: !!isAnyMutationPending,
-				onRevoke: onRevoke ?? (() => undefined),
 				sort: sort as string,
 				dir: dir,
 				handleSorting: handleSorting
 			}),
-		[isAnyMutationPending, onRevoke, pendingSessionId, sort, dir, handleSorting]
+		[sort, dir, handleSorting]
 	);
 
 	function SessionsToolbar({ table }: { table: TableInstance<Session> }) {

@@ -8,15 +8,11 @@ import { ApiError } from "@/lib/api/errors";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
-import {
-	useRevokeOtherSessionsMutation,
-	useRevokeSessionMutation
-} from "@/features/sessions/actions/sessions.mutations";
+import { useRevokeOtherSessionsMutation } from "@/features/sessions/actions/sessions.mutations";
 import {
 	SessionListProvider,
 	useSessionList
 } from "@/features/sessions/context/session-list-context";
-import type { Session } from "@/features/sessions/types/sessions.types";
 import { formatRevokedCount } from "@/features/sessions/utils/session-format";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +35,6 @@ export function SessionsPage() {
 function SessionsPageContent() {
 	const router = useRouter();
 	const { error, handleRefresh } = useSessionList();
-	const revokeSessionMutation = useRevokeSessionMutation();
 	const revokeOtherSessionsMutation = useRevokeOtherSessionsMutation();
 
 	useEffect(() => {
@@ -47,23 +42,6 @@ function SessionsPageContent() {
 
 		handleRequestError(error, router, "Failed to load sessions");
 	}, [error, router]);
-
-	const handleRevokeSession = (session: Session) => {
-		revokeSessionMutation.mutate(session.id, {
-			onSuccess: revokedSession => {
-				if (revokedSession.isCurrent) {
-					toast.success("Session revoked. Please sign in again.");
-					router.replace(route.protected.login);
-					return;
-				}
-
-				toast.success("Session revoked successfully");
-			},
-			onError: error => {
-				handleRequestError(error, router, "Failed to revoke session");
-			}
-		});
-	};
 
 	const handleRevokeOtherSessions = () => {
 		revokeOtherSessionsMutation.mutate(undefined, {
