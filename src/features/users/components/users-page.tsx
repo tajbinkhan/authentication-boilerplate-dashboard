@@ -4,40 +4,36 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserErrorAlert } from "@/features/users/components/user-error-alert";
+import { UserListProvider, useUserList } from "@/features/users/context/user-list-context";
 import { ApiError } from "@/lib/api/errors";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
-import {
-	SessionListProvider,
-	useSessionList
-} from "@/features/sessions/context/session-list-context";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SessionErrorAlert } from "@/features/sessions/components/session-error-alert";
-import { SessionsTable } from "./sessions-table";
+import { UsersTable } from "./users-table";
 
 const breadcrumbItems = [
 	{ name: "Dashboard", href: route.private.dashboard },
-	{ name: "Sessions", isCurrent: true }
+	{ name: "Users", isCurrent: true }
 ];
 
-export function SessionsPage() {
+export function UsersPage() {
 	return (
-		<SessionListProvider>
-			<SessionsPageContent />
-		</SessionListProvider>
+		<UserListProvider>
+			<UsersPageContent />
+		</UserListProvider>
 	);
 }
 
-function SessionsPageContent() {
+function UsersPageContent() {
 	const router = useRouter();
-	const { error, handleRefresh } = useSessionList();
+	const { error, handleRefresh } = useUserList();
 
 	useEffect(() => {
 		if (!error) return;
 
-		handleRequestError(error, router, "Failed to load sessions");
+		handleRequestError(error, router, "Failed to load users");
 	}, [error, router]);
 
 	return (
@@ -46,23 +42,20 @@ function SessionsPageContent() {
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div>
-						<h1 className="text-2xl font-semibold tracking-normal">Sessions</h1>
+						<h1 className="text-2xl font-semibold tracking-normal">Users</h1>
 						<p className="text-muted-foreground text-sm">
-							Review devices, IP addresses, and account access history.
+							Review accounts, roles, verification, and active sessions.
 						</p>
 					</div>
-					{/* <Button type="button" variant="outline" asChild>
-						<Link href={route.private.sessionWorkCalendar}>Work calendar</Link>
-					</Button> */}
 				</div>
 				<Card>
 					<CardHeader>
-						<CardTitle>Session History</CardTitle>
-						<CardDescription>Search, filter, and revoke account sessions.</CardDescription>
+						<CardTitle>User Directory</CardTitle>
+						<CardDescription>Search, filter, and manage user access.</CardDescription>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-4">
-						{error ? <SessionErrorAlert error={error} onRetry={handleRefresh} /> : null}
-						<SessionsTable />
+						{error ? <UserErrorAlert error={error} onRetry={handleRefresh} /> : null}
+						<UsersTable />
 					</CardContent>
 				</Card>
 			</div>

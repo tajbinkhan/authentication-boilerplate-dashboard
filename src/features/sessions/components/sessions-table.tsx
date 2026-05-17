@@ -5,34 +5,24 @@ import { useMemo } from "react";
 import { DataTable } from "@/components/common/table/data-table";
 import type { Table as TableInstance } from "@tanstack/react-table";
 
+import { useRevokeOtherSessionsMutation } from "@/features/sessions/actions/sessions.mutations";
 import { useSessionList } from "@/features/sessions/context/session-list-context";
 import type { Session } from "@/features/sessions/types/sessions.types";
+import { formatRevokedCount } from "@/features/sessions/utils/session-format";
+import { ApiError } from "@/lib/api/errors";
+import { route } from "@/routes/routes";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { createSessionColumns } from "./sessions-data-columns";
 import { SessionsDataTableToolbar } from "./sessions-data-table-toolbar";
 
-interface SessionsTableProps {
-	sessions?: Session[];
-	isLoading?: boolean;
-	activeOtherSessionCount?: number;
-	onRefresh?: () => void;
-	onRevokeOtherSessions?: () => void;
-	isRefreshing?: boolean;
-	isRevokeOtherSessionsPending?: boolean;
-}
-
-export function SessionsTable({
-	onRevokeOtherSessions,
-	isRevokeOtherSessionsPending
-}: SessionsTableProps) {
+export function SessionsTable() {
 	const {
 		tableData,
 		pagination,
 		isLoading,
 		handleOptionFilter,
-		handleRefresh,
-		activeOtherSessionCount,
-		isFetching,
 		sort,
 		dir,
 		handleSorting
@@ -47,19 +37,6 @@ export function SessionsTable({
 		[sort, dir, handleSorting]
 	);
 
-	function SessionsToolbar({ table }: { table: TableInstance<Session> }) {
-		return (
-			<SessionsDataTableToolbar
-				table={table}
-				activeOtherSessionCount={activeOtherSessionCount ?? 0}
-				isRefreshing={isFetching}
-				isRevokeOtherSessionsPending={!!isRevokeOtherSessionsPending}
-				onRefresh={handleRefresh}
-				onRevokeOtherSessions={onRevokeOtherSessions ?? (() => undefined)}
-			/>
-		);
-	}
-
 	return (
 		<DataTable
 			columns={columns}
@@ -72,4 +49,46 @@ export function SessionsTable({
 			emptyDescription="Your active and past login sessions will appear here."
 		/>
 	);
+}
+
+function SessionsToolbar({ table }: { table: TableInstance<Session> }) {
+	const router = useRouter();
+	const { activeOtherSessionCount, handleRefresh, isFetching } = useSessionList();
+	const revokeOtherSessionsMutation = useRevokeOtherSessionsMutation();
+
+	const handleRevokeOtherSessions = () => {
+		revokeOtherSessionsMutation.mutate(undefined, {
+			onSuccess: result => {
+				toast.success(formatRevokedCount(result.revokedCount));
+			},
+			onError: error => {
+				handleRequestError(error, router, "Failed to revoke other sessions");
+			}
+		});
+	};
+
+	return (
+		<SessionsDataTableToolbar
+			table={table}
+			activeOtherSessionCount={activeOtherSessionCount ?? 0}
+			isRefreshing={isFetching}
+			isRevokeOtherSessionsPending={revokeOtherSessionsMutation.isPending}
+			onRefresh={handleRefresh}
+			onRevokeOtherSessions={handleRevokeOtherSessions}
+		/>
+	);
+}
+
+function handleRequestError(
+	error: unknown,
+	router: ReturnType<typeof useRouter>,
+	fallback: string
+) {
+	if (error instanceof ApiError && error.statusCode === 401) {
+		toast.error("Please sign in again");
+		router.replace(route.protected.login);
+		return;
+	}
+
+	toast.error(error instanceof ApiError ? error.message : fallback);
 }

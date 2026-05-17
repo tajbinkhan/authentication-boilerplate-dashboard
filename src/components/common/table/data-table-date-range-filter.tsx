@@ -90,12 +90,18 @@ export function DataTableDateRangeFilter({
 	};
 
 	return (
-		<Field className={cn("w-full gap-1 sm:w-52", className)}>
+		<Field className={cn("w-full gap-1 sm:w-40", className)}>
 			{label ? <FieldLabel htmlFor={triggerId}>{label}</FieldLabel> : null}
 
 			<Popover open={open} onOpenChange={handleOpenChange}>
 				<PopoverTrigger asChild>
-					<Button id={triggerId} type="button" variant="outline" className="w-full justify-start">
+					<Button
+						id={triggerId}
+						type="button"
+						variant="outline"
+						size={"sm"}
+						className="w-full justify-start"
+					>
 						<HugeiconsIcon icon={Calendar03Icon} data-icon="inline-start" />
 						<span className="truncate">{labelText}</span>
 					</Button>

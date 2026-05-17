@@ -5,6 +5,7 @@ export interface NavItemProps {
 	url: string;
 	icon: IconSvgElement;
 	isActive?: boolean;
+	roles?: User["role"][];
 	items?: {
 		title: string;
 		url: string;

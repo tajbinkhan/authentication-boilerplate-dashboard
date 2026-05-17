@@ -2,26 +2,26 @@ import { LuCircleAlert } from "react-icons/lu";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { getSessionErrorMessage } from "@/features/sessions/utils/session-errors";
+import { getUserErrorMessage } from "@/features/users/utils/user-errors";
 
-interface SessionErrorAlertProps {
+interface UserErrorAlertProps {
 	error: unknown;
 	title?: string;
 	onRetry?: () => void;
 }
 
-export function SessionErrorAlert({
+export function UserErrorAlert({
 	error,
-	title = "Session request failed",
+	title = "User request failed",
 	onRetry
-}: SessionErrorAlertProps) {
+}: UserErrorAlertProps) {
 	return (
 		<Alert variant="destructive" className="py-4">
 			<LuCircleAlert className="mt-0.5 shrink-0" />
 			<div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="min-w-0 space-y-1">
 					<AlertTitle>{title}</AlertTitle>
-					<AlertDescription>{getSessionErrorMessage(error)}</AlertDescription>
+					<AlertDescription>{getUserErrorMessage(error)}</AlertDescription>
 				</div>
 				{onRetry ? (
 					<Button

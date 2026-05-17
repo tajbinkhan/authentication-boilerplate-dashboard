@@ -2,10 +2,11 @@
 import { Cancel01Icon, ComputerRemoveIcon, RefreshIcon, Search } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Table } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
 import { AiFillCloseCircle } from "react-icons/ai";
 
 import { DataTableDateRangeFilter } from "@/components/common/table/data-table-date-range-filter";
-import { DataTableFacetedFilter } from "@/components/common/table/data-table-faceted-filter";
+import { DataTableMultiSelectFacetedFilter } from "@/components/common/table/data-table-multi-select-faceted-filter";
 import { DataTableViewOptions } from "@/components/common/table/data-table-view-options";
 import {
 	AlertDialog,
@@ -23,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { useSessionList } from "@/features/sessions/context/session-list-context";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 interface SessionsDataTableToolbarProps<TData> {
 	table: Table<TData>;
@@ -65,9 +67,27 @@ export function SessionsDataTableToolbar<TData>({
 		handleOptionFilter,
 		handleResetAll
 	} = useSessionList();
+	const [searchInput, setSearchInput] = useState(search);
+	const debouncedSearch = useDebouncedValue(searchInput, 400);
 
 	const disabled = activeOtherSessionCount === 0 || isRevokeOtherSessionsPending;
 	const hasFilters = Boolean(search || status || deviceType || fromDate || toDate);
+
+	useEffect(() => {
+		if (debouncedSearch === search) return;
+
+		handleSearchChange(debouncedSearch);
+	}, [debouncedSearch, handleSearchChange, search]);
+
+	const handleClearSearch = () => {
+		setSearchInput("");
+		handleSearchChange("");
+	};
+
+	const handleResetFilters = () => {
+		setSearchInput("");
+		handleResetAll();
+	};
 
 	return (
 		<div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
@@ -76,39 +96,36 @@ export function SessionsDataTableToolbar<TData>({
 					<InputGroup className="max-w-xs">
 						<InputGroupInput
 							id="sessions-search"
-							value={search}
+							value={searchInput}
 							placeholder="Search sessions..."
-							onChange={event => handleSearchChange(event.target.value)}
+							onChange={event => setSearchInput(event.target.value)}
 							className="pl-9"
 						/>
 						<InputGroupAddon>
 							<HugeiconsIcon icon={Search} data-icon="inline-start" />
 						</InputGroupAddon>
 						<InputGroupAddon align="inline-end">
-							{search && (
-								<AiFillCloseCircle
-									className="cursor-pointer"
-									onClick={() => handleSearchChange("")}
-								/>
+							{searchInput && (
+								<AiFillCloseCircle className="cursor-pointer" onClick={handleClearSearch} />
 							)}
 						</InputGroupAddon>
 					</InputGroup>
 				</Field>
 				<div className="flex flex-row items-center gap-2">
-					<DataTableFacetedFilter
+					<DataTableMultiSelectFacetedFilter
 						title="Status"
 						queryParameter="status"
 						options={sessionStatusFilterOptions}
 						onValueChange={() => handleOptionFilter("page", "1")}
 					/>
-					<DataTableFacetedFilter
+					<DataTableMultiSelectFacetedFilter
 						title="Device"
 						queryParameter="deviceType"
 						options={sessionDeviceTypeFilterOptions}
 						onValueChange={() => handleOptionFilter("page", "1")}
 					/>
 					{hasFilters ? (
-						<Button type="button" variant="ghost" onClick={handleResetAll}>
+						<Button type="button" variant="ghost" onClick={handleResetFilters}>
 							Reset
 							<HugeiconsIcon icon={Cancel01Icon} />
 						</Button>

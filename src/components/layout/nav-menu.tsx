@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { NavItemProps } from "@/components/layout/layout.types";
+import useAuth from "@/hooks/use-auth";
 
 interface NavMenuProps {
 	label: string;
@@ -28,6 +29,7 @@ interface NavMenuProps {
 
 export function NavMenu(props: NavMenuProps) {
 	const pathname = usePathname();
+	const { user } = useAuth();
 
 	const isActive = (items?: NavItemProps["items"]) => {
 		if (items) {
@@ -42,47 +44,49 @@ export function NavMenu(props: NavMenuProps) {
 			<SidebarGroupLabel>{props.label}</SidebarGroupLabel>
 			<SidebarGroupContent className="flex flex-col gap-2">
 				<SidebarMenu>
-					{props.items.map(item => (
-						<Collapsible key={item.title} asChild defaultOpen={isActive(item.items)}>
-							<SidebarMenuItem>
-								<SidebarMenuButton
-									asChild
-									tooltip={item.title}
-									isActive={item.url === pathname || isActive(item.items)}
-								>
-									<Link href={item.url}>
-										<HugeiconsIcon icon={item.icon} />
-										<span>{item.title}</span>
-									</Link>
-								</SidebarMenuButton>
+					{props.items
+						.filter(item => !item.roles?.length || (user && item.roles.includes(user.role)))
+						.map(item => (
+							<Collapsible key={item.title} asChild defaultOpen={isActive(item.items)}>
+								<SidebarMenuItem>
+									<SidebarMenuButton
+										asChild
+										tooltip={item.title}
+										isActive={item.url === pathname || isActive(item.items)}
+									>
+										<Link href={item.url}>
+											<HugeiconsIcon icon={item.icon} />
+											<span>{item.title}</span>
+										</Link>
+									</SidebarMenuButton>
 
-								{item.items?.length ? (
-									<>
-										<CollapsibleTrigger asChild>
-											<SidebarMenuAction className="data-[state=open]:rotate-90">
-												<HugeiconsIcon icon={ArrowRight01Icon} />
-												<span className="sr-only">Toggle</span>
-											</SidebarMenuAction>
-										</CollapsibleTrigger>
+									{item.items?.length ? (
+										<>
+											<CollapsibleTrigger asChild>
+												<SidebarMenuAction className="data-[state=open]:rotate-90">
+													<HugeiconsIcon icon={ArrowRight01Icon} />
+													<span className="sr-only">Toggle</span>
+												</SidebarMenuAction>
+											</CollapsibleTrigger>
 
-										<CollapsibleContent>
-											<SidebarMenuSub>
-												{item.items.map(subItem => (
-													<SidebarMenuSubItem key={subItem.title}>
-														<SidebarMenuSubButton asChild isActive={subItem.url === pathname}>
-															<Link href={subItem.url}>
-																<span>{subItem.title}</span>
-															</Link>
-														</SidebarMenuSubButton>
-													</SidebarMenuSubItem>
-												))}
-											</SidebarMenuSub>
-										</CollapsibleContent>
-									</>
-								) : null}
-							</SidebarMenuItem>
-						</Collapsible>
-					))}
+											<CollapsibleContent>
+												<SidebarMenuSub>
+													{item.items.map(subItem => (
+														<SidebarMenuSubItem key={subItem.title}>
+															<SidebarMenuSubButton asChild isActive={subItem.url === pathname}>
+																<Link href={subItem.url}>
+																	<span>{subItem.title}</span>
+																</Link>
+															</SidebarMenuSubButton>
+														</SidebarMenuSubItem>
+													))}
+												</SidebarMenuSub>
+											</CollapsibleContent>
+										</>
+									) : null}
+								</SidebarMenuItem>
+							</Collapsible>
+						))}
 				</SidebarMenu>
 			</SidebarGroupContent>
 		</SidebarGroup>

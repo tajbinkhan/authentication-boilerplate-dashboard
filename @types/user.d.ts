@@ -1,9 +1,7 @@
 interface User {
-	id: number;
+	id: string;
 	name: string | null;
-	publicId: string;
 	email: string;
-	password: string | null;
 	emailVerified: boolean;
 	image: string | null;
 	phone: string | null;

@@ -6,6 +6,7 @@ export const route = {
 	private: {
 		dashboard: "/",
 		profile: "/profile",
+		users: "/users",
 		sessions: "/sessions"
 	},
 	protected: {
@@ -21,6 +22,9 @@ export const apiRoute = {
 	magicLinkVerify: "/auth/magic-link/verify",
 	me: "/auth/me",
 	logout: "/auth/logout",
+	users: "/users",
+	userRole: (id: string) => `/users/${id}/role`,
+	userSessionsRevoke: (id: string) => `/users/${id}/sessions/revoke`,
 	sessions: "/auth/sessions",
 	sessionRevoke: (id: string) => `/auth/sessions/${id}/revoke`,
 	revokeOtherSessions: "/auth/sessions/revoke-others"
