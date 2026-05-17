@@ -133,7 +133,9 @@ export function DataTablePagination<TData>({
 	return (
 		<div className="flex items-center justify-between px-2">
 			<div className="text-muted-foreground flex-1 text-sm">
-				{selectedCount > 0 && `${selectedCount} of ${pagination.total} row(s) selected.`}
+				{selectedCount > 0
+					? `${selectedCount} of ${pagination.total} row(s) selected.`
+					: `${pagination.total} total rows.`}
 			</div>
 			<div className="flex items-center space-x-6 lg:space-x-8">
 				<div className="flex items-center space-x-2">

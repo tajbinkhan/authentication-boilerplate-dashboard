@@ -35,6 +35,7 @@ interface SessionListContextValue {
 	handleOptionFilter: (key: string, value?: string | string[] | null) => void;
 	handleSearchChange: (value: string) => void;
 	handleDateChange: (key: "fromDate" | "toDate", value: string) => void;
+	handleDateRangeChange: (value: { fromDate?: string; toDate?: string }) => void;
 	handleResetAll: () => void;
 	handleRefresh: () => void;
 }
@@ -122,6 +123,17 @@ export function SessionListProvider({ children }: SessionListProviderProps) {
 		[setParams]
 	);
 
+	const handleDateRangeChange = useCallback(
+		(value: { fromDate?: string; toDate?: string }) => {
+			void setParams({
+				fromDate: value.fromDate?.trim() || null,
+				toDate: value.toDate?.trim() || null,
+				page: 1
+			});
+		},
+		[setParams]
+	);
+
 	const handleResetAll = useCallback(() => {
 		void setParams({
 			page: 1,
@@ -168,11 +180,13 @@ export function SessionListProvider({ children }: SessionListProviderProps) {
 			handleOptionFilter,
 			handleSearchChange,
 			handleDateChange,
+			handleDateRangeChange,
 			handleResetAll,
 			handleRefresh
 		}),
 		[
 			handleDateChange,
+			handleDateRangeChange,
 			handleOptionFilter,
 			handleRefresh,
 			handleResetAll,
