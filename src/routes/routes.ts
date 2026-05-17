@@ -5,7 +5,8 @@ export const route = {
 	},
 	private: {
 		dashboard: "/",
-		profile: "/profile"
+		profile: "/profile",
+		sessions: "/sessions"
 	},
 	protected: {
 		login: "/login",
@@ -19,7 +20,10 @@ export const apiRoute = {
 	magicLinkRequest: "/auth/magic-link/request",
 	magicLinkVerify: "/auth/magic-link/verify",
 	me: "/auth/me",
-	logout: "/auth/logout"
+	logout: "/auth/logout",
+	sessions: "/auth/sessions",
+	sessionRevoke: (id: string) => `/auth/sessions/${id}/revoke`,
+	revokeOtherSessions: "/auth/sessions/revoke-others"
 } as const;
 
 const DEFAULT_LOGIN_REDIRECT = route.private.dashboard;

@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 interface DataTableFacetedFilterProps {
 	title?: string;
 	queryParameter: string;
+	onValueChange?: (value: string | null) => void;
 	options:
 		| {
 				label: string;
@@ -36,6 +37,7 @@ interface DataTableFacetedFilterProps {
 export function DataTableFacetedFilter({
 	title,
 	queryParameter,
+	onValueChange,
 	options
 }: DataTableFacetedFilterProps) {
 	const [queryValue, setQueryValue] = useQueryState(queryParameter, {
@@ -49,15 +51,20 @@ export function DataTableFacetedFilter({
 	const handleSelect = (value: string) => {
 		if (selectedValues.includes(value)) {
 			const filteredValues = selectedValues.filter(selectedValue => selectedValue !== value);
-			void setQueryValue(filteredValues.length > 0 ? filteredValues.join(",") : null);
+			const nextValue = filteredValues.length > 0 ? filteredValues.join(",") : null;
+			void setQueryValue(nextValue);
+			onValueChange?.(nextValue);
 			return;
 		}
 
-		void setQueryValue([...selectedValues, value].join(","));
+		const nextValue = [...selectedValues, value].join(",");
+		void setQueryValue(nextValue);
+		onValueChange?.(nextValue);
 	};
 
 	const handleClearFilter = () => {
 		void setQueryValue(null);
+		onValueChange?.(null);
 	};
 
 	const hasSelectedValues =

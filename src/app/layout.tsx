@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import AuthProvider from "@/providers/auth-provider";
 import { AppGoogleOAuthProvider } from "@/providers/google-oauth-provider";
 import { ThemeProvider } from "@/providers/next-themes-provider";
+import QueryProvider from "@/providers/query-provider";
 import { RedirectProvider } from "@/providers/redirect-provider";
 import { getUserFromRequestHeaders } from "@/server/fetch-auth";
 import type { Metadata } from "next";
@@ -50,10 +51,12 @@ export default async function RootLayout({ children }: Readonly<GlobalLayoutProp
 					<AuthProvider user={user}>
 						<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
 							<AppGoogleOAuthProvider>
-								<RedirectProvider>
-									<TooltipProvider>{children}</TooltipProvider>
-									<Toaster richColors position="top-right" />
-								</RedirectProvider>
+								<QueryProvider>
+									<RedirectProvider>
+										<TooltipProvider>{children}</TooltipProvider>
+										<Toaster richColors position="top-right" />
+									</RedirectProvider>
+								</QueryProvider>
 							</AppGoogleOAuthProvider>
 						</ThemeProvider>
 					</AuthProvider>
