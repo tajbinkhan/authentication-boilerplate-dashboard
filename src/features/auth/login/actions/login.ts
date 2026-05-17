@@ -54,14 +54,17 @@ async function saveMagicLinkRedirect(redirectUrl: string | null) {
 	});
 }
 
-async function consumeMagicLinkRedirect(): Promise<string> {
+async function consumeMagicLinkRedirectWithPreferred(
+	redirectUrl: string | null
+): Promise<string> {
 	const cookieStore = await cookies();
 	const savedRedirect = cookieStore.get(MAGIC_LINK_REDIRECT_COOKIE)?.value ?? null;
-	const safeRedirectPath = resolveSafeRedirectPath(savedRedirect);
+	const safePreferredRedirectPath = resolveSafeRedirectPath(redirectUrl);
+	const safeSavedRedirectPath = resolveSafeRedirectPath(savedRedirect);
 
 	cookieStore.delete(MAGIC_LINK_REDIRECT_COOKIE);
 
-	return safeRedirectPath ?? route.private.dashboard;
+	return safePreferredRedirectPath ?? safeSavedRedirectPath ?? route.private.dashboard;
 }
 
 export async function googleLogin(
@@ -99,11 +102,16 @@ export async function requestMagicLink(
 	}
 
 	try {
-		await saveMagicLinkRedirect(redirectUrl);
+		const safeRedirectPath = resolveSafeRedirectPath(redirectUrl);
+
+		await saveMagicLinkRedirect(safeRedirectPath);
 		await serverApi<ApiResponse<null>>({
 			method: "POST",
 			url: apiRoute.magicLinkRequest,
-			data: { email: parsed.data.email }
+			data: {
+				email: parsed.data.email,
+				...(safeRedirectPath ? { redirectUrl: safeRedirectPath } : {})
+			}
 		});
 
 		return {
@@ -120,13 +128,19 @@ export async function requestMagicLink(
 
 export async function verifyMagicLink(
 	email: string,
-	token: string
+	token: string,
+	redirectUrl: string | null = null
 ): Promise<{ success: boolean; message: string; redirectUrl: string }> {
 	try {
+		const safeRedirectPath = resolveSafeRedirectPath(redirectUrl);
 		const { headers } = await serverApi<{ message: string; data: User }>({
 			method: "POST",
 			url: apiRoute.magicLinkVerify,
-			data: { email, token }
+			data: {
+				email,
+				token,
+				...(safeRedirectPath ? { redirectUrl: safeRedirectPath } : {})
+			}
 		});
 
 		await forwardCookies(headers["set-cookie"]);
@@ -134,7 +148,7 @@ export async function verifyMagicLink(
 		return {
 			success: true,
 			message: "Magic link verified successfully.",
-			redirectUrl: await consumeMagicLinkRedirect()
+			redirectUrl: await consumeMagicLinkRedirectWithPreferred(safeRedirectPath)
 		};
 	} catch (error) {
 		return {

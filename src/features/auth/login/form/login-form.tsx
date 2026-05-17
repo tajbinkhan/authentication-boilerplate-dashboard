@@ -3,7 +3,7 @@
 import { Loading03Icon, Mail01Icon, MailSend01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CredentialResponse, GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
-import { FormEvent, useState } from "react";
+import { SyntheticEvent, useState } from "react";
 import { FaGoogle } from "react-icons/fa";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -37,7 +37,7 @@ export function LoginForm() {
 	const [isLoggingInWithGoogle, setIsLoggingInWithGoogle] = useState(false);
 	const [googleErrorMessage, setGoogleErrorMessage] = useState<string | null>(null);
 
-	const handleMagicLinkSubmit = async (event: FormEvent<HTMLFormElement>) => {
+	const handleMagicLinkSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		setIsRequestingMagicLink(true);
 		setMagicLinkMessage(null);

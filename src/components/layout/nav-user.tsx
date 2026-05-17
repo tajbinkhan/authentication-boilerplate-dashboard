@@ -26,6 +26,7 @@ import { getUserInitials } from "@/core/helper";
 import useAuth from "@/hooks/use-auth";
 import axiosClientApi from "@/lib/client-api";
 import { apiRoute, route } from "@/routes/routes";
+import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
 interface NavUserComponentProps {
@@ -35,6 +36,7 @@ interface NavUserComponentProps {
 export function NavUser(props: NavUserComponentProps) {
 	const { isMobile } = useSidebar();
 	const { user, isAuthenticated } = useAuth();
+	const pathname = usePathname();
 
 	if (!isAuthenticated || !user) {
 		return null;
@@ -48,7 +50,11 @@ export function NavUser(props: NavUserComponentProps) {
 			.post(apiRoute.logout)
 			.then(() => {
 				toast.success("Logged out successfully");
-				window.location.href = route.protected.login;
+				const redirectLocation =
+					route.protected.login +
+					"?redirect=" +
+					encodeURIComponent(process.env.NEXT_PUBLIC_FRONTEND_URL + pathname);
+				window.location.href = redirectLocation;
 			})
 			.catch(error => {
 				toast.error("Failed to log out");
