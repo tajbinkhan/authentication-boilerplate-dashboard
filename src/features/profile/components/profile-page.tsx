@@ -1,3 +1,6 @@
+"use client";
+
+import { TwoFactorSecurityCard } from "@/features/auth/two-factor/components/two-factor-security-card";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
@@ -10,7 +13,15 @@ export default function ProfilePage() {
 	return (
 		<>
 			<SetBreadcrumb items={breadcrumbItems} />
-			<div>Profile Page</div>
+			<div className="flex flex-col gap-6">
+				<div>
+					<h1 className="text-2xl font-semibold tracking-normal">Profile</h1>
+					<p className="text-muted-foreground text-sm">
+						Manage your account profile and security settings.
+					</p>
+				</div>
+				<TwoFactorSecurityCard />
+			</div>
 		</>
 	);
 }

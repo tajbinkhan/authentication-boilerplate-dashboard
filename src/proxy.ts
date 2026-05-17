@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import type { ApiErrorPayload } from "@/lib/api/errors";
 import { DEFAULT_LOGIN_REDIRECT, apiRoute, route } from "@/routes/routes";
 
 const AUTH_USER_HEADER = "x-auth-user";
@@ -9,6 +10,11 @@ const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
 const PUBLIC_ROUTES = Object.values(route.public) as string[];
 const PRIVATE_ROUTES = Object.values(route.private) as string[];
 const PROTECTED_ROUTES = Object.values(route.protected) as string[];
+
+type AuthState =
+	| { status: "authenticated"; user: User }
+	| { status: "requires_2fa" }
+	| { status: "unauthenticated" };
 
 function isRouteMatch(pathname: string, routePath: string): boolean {
 	if (routePath === route.private.dashboard) {
@@ -59,9 +65,9 @@ function createNextResponseWithUser(request: NextRequest, user: User) {
 	});
 }
 
-async function getAuthenticatedUser(request: NextRequest): Promise<User | null> {
+async function getAuthState(request: NextRequest): Promise<AuthState> {
 	if (!process.env.NEXT_PUBLIC_API_URL) {
-		return null;
+		return { status: "unauthenticated" };
 	}
 
 	try {
@@ -76,13 +82,23 @@ async function getAuthenticatedUser(request: NextRequest): Promise<User | null> 
 		});
 
 		if (!response.ok) {
-			return null;
+			const payload = (await response.json().catch(() => null)) as
+				| ApiErrorPayload
+				| null;
+
+			if (response.status === 401 && payload?.code === "two_factor_required") {
+				return { status: "requires_2fa" };
+			}
+
+			return { status: "unauthenticated" };
 		}
 
 		const payload = (await response.json()) as ApiResponse<User>;
-		return payload.data ?? null;
+		return payload.data
+			? { status: "authenticated", user: payload.data }
+			: { status: "unauthenticated" };
 	} catch {
-		return null;
+		return { status: "unauthenticated" };
 	}
 }
 
@@ -92,6 +108,7 @@ export async function proxy(request: NextRequest) {
 	const isPublicRoute = matchesAnyRoute(pathname, PUBLIC_ROUTES);
 	const isPrivateRoute = matchesAnyRoute(pathname, PRIVATE_ROUTES);
 	const isProtectedRoute = matchesAnyRoute(pathname, PROTECTED_ROUTES);
+	const isTwoFactorVerifyRoute = isRouteMatch(pathname, route.protected.twoFactorVerify);
 
 	if (isPublicRoute) {
 		return NextResponse.next();
@@ -101,24 +118,34 @@ export async function proxy(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	const authenticatedUser = await getAuthenticatedUser(request);
-	const authenticated = Boolean(authenticatedUser);
+	const authState = await getAuthState(request);
 
-	if (!authenticated && isPrivateRoute) {
+	if (authState.status === "unauthenticated" && isPrivateRoute) {
 		const loginUrl = new URL(route.protected.login, request.url);
 		loginUrl.searchParams.set("redirect", request.nextUrl.href);
 
 		return NextResponse.redirect(loginUrl);
 	}
 
-	if (authenticated && isProtectedRoute) {
+	if (authState.status === "requires_2fa" && !isTwoFactorVerifyRoute) {
+		const verifyUrl = new URL(route.protected.twoFactorVerify, request.url);
+		verifyUrl.searchParams.set("redirect", request.nextUrl.href);
+
+		return NextResponse.redirect(verifyUrl);
+	}
+
+	if (authState.status === "requires_2fa" && isTwoFactorVerifyRoute) {
+		return NextResponse.next();
+	}
+
+	if (authState.status === "authenticated" && isProtectedRoute) {
 		const response = NextResponse.redirect(resolvePostLoginRedirect(request));
 		response.cookies.delete(MAGIC_LINK_REDIRECT_COOKIE);
 		return response;
 	}
 
-	if (authenticatedUser) {
-		return createNextResponseWithUser(request, authenticatedUser);
+	if (authState.status === "authenticated") {
+		return createNextResponseWithUser(request, authState.user);
 	}
 
 	return NextResponse.next();

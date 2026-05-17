@@ -9,6 +9,8 @@ import type {
 	ManagedUser,
 	RevokeUserSessionsInput,
 	RevokeUserSessionsResponse,
+	ResetUserTwoFactorInput,
+	ResetUserTwoFactorResponse,
 	UpdateUserInput,
 	UpdateUserRoleInput,
 	UserListQuery,
@@ -60,5 +62,14 @@ export async function revokeUserSessions({
 	return apiClient<RevokeUserSessionsResponse>({
 		method: "POST",
 		url: apiRoute.userSessionsRevoke(id)
+	});
+}
+
+export async function resetUserTwoFactor({
+	id
+}: ResetUserTwoFactorInput): Promise<ResetUserTwoFactorResponse> {
+	return apiClient<ResetUserTwoFactorResponse>({
+		method: "POST",
+		url: apiRoute.userTwoFactorReset(id)
 	});
 }

@@ -3,6 +3,7 @@
 import {
 	ComputerRemoveIcon,
 	Delete02Icon,
+	LockKeyIcon,
 	MoreVerticalIcon,
 	ShieldBanIcon,
 	UserEdit01Icon
@@ -51,6 +52,7 @@ import {
 import {
 	useDeleteUserMutation,
 	useRevokeUserSessionsMutation,
+	useResetUserTwoFactorMutation,
 	useUpdateUserMutation,
 	useUpdateUserRoleMutation
 } from "@/features/users/actions/users.mutations";
@@ -80,10 +82,12 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 	const updateUserRoleMutation = useUpdateUserRoleMutation();
 	const deleteUserMutation = useDeleteUserMutation();
 	const revokeUserSessionsMutation = useRevokeUserSessionsMutation();
+	const resetUserTwoFactorMutation = useResetUserTwoFactorMutation();
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+	const [resetTwoFactorDialogOpen, setResetTwoFactorDialogOpen] = useState(false);
 	const [editValues, setEditValues] = useState<UserFormValues>(() => createEditValues(user));
 	const [nextRole, setNextRole] = useState<UserRole>(user.role);
 
@@ -107,8 +111,7 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 				name: emptyToNull(editValues.name),
 				email: editValues.email.trim().toLowerCase(),
 				phone: emptyToNull(editValues.phone),
-				emailVerified: editValues.emailVerified,
-				is2faEnabled: editValues.is2faEnabled
+				emailVerified: editValues.emailVerified
 			},
 			{
 				onSuccess: () => {
@@ -167,6 +170,23 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 		);
 	};
 
+	const handleResetTwoFactor = () => {
+		resetUserTwoFactorMutation.mutate(
+			{ id: user.id },
+			{
+				onSuccess: result => {
+					toast.success(
+						`Two-factor reset. ${formatRevokedUserSessionsCount(result.revokedCount)}.`
+					);
+					setResetTwoFactorDialogOpen(false);
+				},
+				onError: error => {
+					handleRequestError(error, router, "Failed to reset two-factor authentication");
+				}
+			}
+		);
+	};
+
 	return (
 		<>
 			<DropdownMenu>
@@ -199,6 +219,17 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 						Change role
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						variant="destructive"
+						disabled={!manageable || !user.is2faEnabled}
+						onSelect={event => {
+							event.preventDefault();
+							setResetTwoFactorDialogOpen(true);
+						}}
+					>
+						<HugeiconsIcon icon={LockKeyIcon} />
+						Reset 2FA
+					</DropdownMenuItem>
 					<DropdownMenuItem
 						variant="destructive"
 						disabled={!manageable || user.activeSessionCount === 0}
@@ -320,6 +351,31 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 				</AlertDialogContent>
 			</AlertDialog>
 
+			<AlertDialog open={resetTwoFactorDialogOpen} onOpenChange={setResetTwoFactorDialogOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogMedia>
+							<HugeiconsIcon icon={LockKeyIcon} />
+						</AlertDialogMedia>
+						<AlertDialogTitle>Reset user 2FA?</AlertDialogTitle>
+						<AlertDialogDescription>
+							This disables two-factor authentication for {user.email} and revokes all of their
+							sessions.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							variant="destructive"
+							onClick={handleResetTwoFactor}
+							disabled={resetUserTwoFactorMutation.isPending}
+						>
+							{resetUserTwoFactorMutation.isPending ? "Resetting" : "Reset 2FA"}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
@@ -354,8 +410,7 @@ function createEditValues(user: ManagedUser): UserFormValues {
 		password: "",
 		phone: user.phone ?? "",
 		role: user.role,
-		emailVerified: user.emailVerified,
-		is2faEnabled: user.is2faEnabled
+		emailVerified: user.emailVerified
 	};
 }
 

@@ -64,7 +64,6 @@ export function CreateUserDialog() {
 				password: emptyToNull(values.password),
 				phone: emptyToNull(values.phone),
 				emailVerified: values.emailVerified,
-				is2faEnabled: values.is2faEnabled,
 				role: values.role
 			},
 			{
@@ -123,8 +122,7 @@ function createInitialValues(currentUser: User | null | undefined): UserFormValu
 		password: "",
 		phone: "",
 		role: getDefaultAssignableRole(currentUser),
-		emailVerified: false,
-		is2faEnabled: false
+		emailVerified: false
 	};
 }
 

@@ -20,7 +20,6 @@ export interface UserFormValues {
 	phone: string;
 	role: UserRole;
 	emailVerified: boolean;
-	is2faEnabled: boolean;
 }
 
 interface UserFormFieldsProps {
@@ -115,7 +114,7 @@ export function UserFormFields({
 					</Field>
 				) : null}
 			</div>
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-4">
 				<Field orientation="horizontal" className="items-center justify-between rounded-2xl border p-3">
 					<div>
 						<FieldLabel htmlFor={`${idPrefix}-email-verified`}>Email verified</FieldLabel>
@@ -125,18 +124,6 @@ export function UserFormFields({
 						id={`${idPrefix}-email-verified`}
 						checked={values.emailVerified}
 						onCheckedChange={checked => onChange("emailVerified", checked)}
-						disabled={disabled}
-					/>
-				</Field>
-				<Field orientation="horizontal" className="items-center justify-between rounded-2xl border p-3">
-					<div>
-						<FieldLabel htmlFor={`${idPrefix}-two-factor`}>Two-factor</FieldLabel>
-						<FieldDescription>Require a verified 2FA state.</FieldDescription>
-					</div>
-					<Switch
-						id={`${idPrefix}-two-factor`}
-						checked={values.is2faEnabled}
-						onCheckedChange={checked => onChange("is2faEnabled", checked)}
 						disabled={disabled}
 					/>
 				</Field>

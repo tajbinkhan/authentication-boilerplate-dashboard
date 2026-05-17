@@ -1,6 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { createUser, deleteUser, revokeUserSessions, updateUser, updateUserRole } from "./users.actions";
+import {
+	createUser,
+	deleteUser,
+	resetUserTwoFactor,
+	revokeUserSessions,
+	updateUser,
+	updateUserRole
+} from "./users.actions";
 import { userKeys } from "./users.keys";
 
 export function useCreateUserMutation() {
@@ -52,6 +59,17 @@ export function useRevokeUserSessionsMutation() {
 
 	return useMutation({
 		mutationFn: revokeUserSessions,
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: userKeys.all });
+		}
+	});
+}
+
+export function useResetUserTwoFactorMutation() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: resetUserTwoFactor,
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey: userKeys.all });
 		}

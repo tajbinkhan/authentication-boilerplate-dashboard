@@ -48,7 +48,6 @@ export interface CreateUserInput {
 	password?: string | null;
 	phone?: string | null;
 	emailVerified?: boolean;
-	is2faEnabled?: boolean;
 	role: UserRole;
 }
 
@@ -58,7 +57,6 @@ export interface UpdateUserInput {
 	email?: string;
 	phone?: string | null;
 	emailVerified?: boolean;
-	is2faEnabled?: boolean;
 }
 
 export interface UpdateUserRoleInput {
@@ -79,5 +77,14 @@ export interface RevokeUserSessionsInput {
 }
 
 export interface RevokeUserSessionsResponse {
+	revokedCount: number;
+}
+
+export interface ResetUserTwoFactorInput {
+	id: string;
+}
+
+export interface ResetUserTwoFactorResponse {
+	reset: boolean;
 	revokedCount: number;
 }
