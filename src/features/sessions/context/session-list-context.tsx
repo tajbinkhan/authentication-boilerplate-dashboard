@@ -8,8 +8,8 @@ import { useSessionsQuery } from "@/features/sessions/actions/sessions.queries";
 import { sessionSearchParams } from "@/features/sessions/schemas/sessions.schema";
 import type {
 	Session,
-	SessionListResponse,
 	SessionListQuery,
+	SessionListResponse,
 	SessionSort,
 	SessionSortDirection
 } from "@/features/sessions/types/sessions.types";
@@ -44,7 +44,7 @@ const defaultPagination: SessionListResponse = {
 	rows: [],
 	total: 0,
 	page: 1,
-	pageSize: 25,
+	pageSize: 10,
 	activeOtherSessionCount: 0
 };
 const sortableSessionColumns = new Set<string>(sessionSortValues);
@@ -137,7 +137,7 @@ export function SessionListProvider({ children }: SessionListProviderProps) {
 	const handleResetAll = useCallback(() => {
 		void setParams({
 			page: 1,
-			pageSize: 25,
+			pageSize: 10,
 			search: null,
 			status: null,
 			deviceType: null,
@@ -222,3 +222,4 @@ export function useSessionList() {
 
 	return context;
 }
+

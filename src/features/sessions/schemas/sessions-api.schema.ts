@@ -38,7 +38,9 @@ const statusQuerySchema = csvQuerySchema.refine(
 		!value ||
 		value
 			.split(",")
-			.every(status => sessionStatusValues.includes(status.trim() as (typeof sessionStatusValues)[number])),
+			.every(status =>
+				sessionStatusValues.includes(status.trim() as (typeof sessionStatusValues)[number])
+			),
 	{ message: "Status is invalid" }
 );
 
@@ -51,8 +53,8 @@ const pageQuerySchema = z
 const pageSizeQuerySchema = z
 	.preprocess(firstSearchParamValue, z.coerce.number().int().min(1).max(100))
 	.optional()
-	.catch(25)
-	.default(25);
+	.catch(10)
+	.default(10);
 
 const sortQuerySchema = z
 	.preprocess(firstSearchParamValue, z.enum(sessionSortValues))
@@ -97,3 +99,4 @@ export function createSessionListQuery(input: unknown): SessionListQuery {
 		dir: query.dir
 	};
 }
+

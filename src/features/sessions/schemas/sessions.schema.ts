@@ -7,7 +7,7 @@ import {
 
 export const sessionSearchParams = {
 	page: parseAsInteger.withDefault(1),
-	pageSize: parseAsInteger.withDefault(25),
+	pageSize: parseAsInteger.withDefault(10),
 	search: parseAsString.withDefault(""),
 	status: parseAsString.withDefault(""),
 	deviceType: parseAsString.withDefault(""),
@@ -16,3 +16,4 @@ export const sessionSearchParams = {
 	sort: parseAsStringEnum([...sessionSortValues]).withDefault("createdAt"),
 	dir: parseAsStringEnum([...sessionSortDirectionValues]).withDefault("desc")
 };
+

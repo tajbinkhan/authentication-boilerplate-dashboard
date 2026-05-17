@@ -43,7 +43,7 @@ const defaultPagination: UserListResponse = {
 	rows: [],
 	total: 0,
 	page: 1,
-	pageSize: 25
+	pageSize: 10
 };
 
 const sortableUserColumns = new Set<string>(userSortValues);
@@ -136,7 +136,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 	const handleResetAll = useCallback(() => {
 		void setParams({
 			page: 1,
-			pageSize: 25,
+			pageSize: 10,
 			search: null,
 			role: null,
 			emailVerified: null,
@@ -219,3 +219,4 @@ export function useUserList() {
 
 	return context;
 }
+
