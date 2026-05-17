@@ -3,7 +3,7 @@
 import { Copy01Icon, Loading03Icon, LockKeyIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import { useState, type FormEvent } from "react";
+import { SyntheticEvent, useState } from "react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -67,7 +67,7 @@ export function TwoFactorSecurityCard() {
 		});
 	};
 
-	const handleConfirmSetup = (event: FormEvent<HTMLFormElement>) => {
+	const handleConfirmSetup = (event: SyntheticEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
 		confirmSetupMutation.mutate(
@@ -82,7 +82,7 @@ export function TwoFactorSecurityCard() {
 		);
 	};
 
-	const handleDisable = (event: FormEvent<HTMLFormElement>) => {
+	const handleDisable = (event: SyntheticEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
 		disableMutation.mutate(
@@ -98,7 +98,7 @@ export function TwoFactorSecurityCard() {
 		);
 	};
 
-	const handleRegenerate = (event: FormEvent<HTMLFormElement>) => {
+	const handleRegenerate = (event: SyntheticEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
 		regenerateMutation.mutate(
@@ -111,8 +111,7 @@ export function TwoFactorSecurityCard() {
 					setRecoveryOpen(true);
 					toast.success("Recovery codes regenerated");
 				},
-				onError: error =>
-					toast.error(getErrorMessage(error, "Failed to regenerate recovery codes"))
+				onError: error => toast.error(getErrorMessage(error, "Failed to regenerate recovery codes"))
 			}
 		);
 	};
@@ -297,7 +296,7 @@ interface CodeDialogProps {
 	description: string;
 	code: string;
 	onCodeChange: (code: string) => void;
-	onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+	onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
 	isPending: boolean;
 	actionLabel: string;
 	variant?: "default" | "destructive";
@@ -388,3 +387,4 @@ function RecoveryCodesContent({ recoveryCodes, onCopy, onDone }: RecoveryCodesCo
 function getErrorMessage(error: unknown, fallback: string): string {
 	return error instanceof Error ? error.message : fallback;
 }
+
