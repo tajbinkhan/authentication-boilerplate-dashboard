@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy01Icon, Loading03Icon, LockKeyIcon } from "@hugeicons/core-free-icons";
+import { Loading03Icon, LockKeyIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import { SyntheticEvent, useState } from "react";
@@ -35,6 +35,8 @@ import {
 } from "@/features/auth/two-factor/actions/two-factor.mutations";
 import { useTwoFactorStatusQuery } from "@/features/auth/two-factor/actions/two-factor.queries";
 import type { TwoFactorSetupStart } from "@/features/auth/two-factor/types/two-factor.types";
+import { CodeDialog } from "./code-dialog";
+import { RecoveryCodesContent } from "./recovery-codes-content";
 
 export function TwoFactorSecurityCard() {
 	const statusQuery = useTwoFactorStatusQuery();
@@ -286,101 +288,6 @@ export function TwoFactorSecurityCard() {
 				</DialogContent>
 			</Dialog>
 		</>
-	);
-}
-
-interface CodeDialogProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	title: string;
-	description: string;
-	code: string;
-	onCodeChange: (code: string) => void;
-	onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
-	isPending: boolean;
-	actionLabel: string;
-	variant?: "default" | "destructive";
-}
-
-function CodeDialog({
-	open,
-	onOpenChange,
-	title,
-	description,
-	code,
-	onCodeChange,
-	onSubmit,
-	isPending,
-	actionLabel,
-	variant = "default"
-}: CodeDialogProps) {
-	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent>
-				<form onSubmit={onSubmit} className="grid gap-6">
-					<DialogHeader>
-						<DialogTitle>{title}</DialogTitle>
-						<DialogDescription>{description}</DialogDescription>
-					</DialogHeader>
-					<Field>
-						<FieldLabel htmlFor={`${actionLabel}-code`}>Code</FieldLabel>
-						<Input
-							id={`${actionLabel}-code`}
-							value={code}
-							onChange={event => onCodeChange(event.target.value)}
-							autoComplete="one-time-code"
-							placeholder="123456 or ABCDE-F1234"
-							disabled={isPending}
-						/>
-					</Field>
-					<DialogFooter>
-						<DialogClose asChild>
-							<Button type="button" variant="outline">
-								Cancel
-							</Button>
-						</DialogClose>
-						<Button type="submit" variant={variant} disabled={!code.trim() || isPending}>
-							{isPending ? "Working" : actionLabel}
-						</Button>
-					</DialogFooter>
-				</form>
-			</DialogContent>
-		</Dialog>
-	);
-}
-
-interface RecoveryCodesContentProps {
-	recoveryCodes: string[];
-	onCopy: () => void;
-	onDone: () => void;
-}
-
-function RecoveryCodesContent({ recoveryCodes, onCopy, onDone }: RecoveryCodesContentProps) {
-	return (
-		<div className="grid gap-6">
-			<DialogHeader>
-				<DialogTitle>Save your recovery codes</DialogTitle>
-				<DialogDescription>
-					These codes are shown once. Store them somewhere safe before closing.
-				</DialogDescription>
-			</DialogHeader>
-			<div className="grid gap-2 sm:grid-cols-2">
-				{recoveryCodes.map(code => (
-					<div key={code} className="bg-muted rounded-lg px-3 py-2 font-mono text-sm">
-						{code}
-					</div>
-				))}
-			</div>
-			<DialogFooter>
-				<Button type="button" variant="outline" onClick={onCopy}>
-					<HugeiconsIcon icon={Copy01Icon} data-icon="inline-start" />
-					Copy codes
-				</Button>
-				<Button type="button" onClick={onDone}>
-					I have saved these codes
-				</Button>
-			</DialogFooter>
-		</div>
 	);
 }
 
