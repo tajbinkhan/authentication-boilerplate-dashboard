@@ -11,6 +11,7 @@ interface MagicLinkVerifyPageProps {
 	searchParams: Promise<{
 		email?: string | string[];
 		token?: string | string[];
+		redirect?: string | string[];
 	}>;
 }
 
@@ -26,6 +27,7 @@ export default async function MagicLinkVerifyPage({ searchParams }: MagicLinkVer
 		<MagicLinkVerifyClient
 			email={readQueryValue(params.email)}
 			token={readQueryValue(params.token)}
+			redirectUrl={readQueryValue(params.redirect)}
 		/>
 	);
 }

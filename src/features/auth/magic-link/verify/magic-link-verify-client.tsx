@@ -15,6 +15,7 @@ type VerifyStatus = "verifying" | "success" | "error";
 interface MagicLinkVerifyClientProps {
 	email: string | null;
 	token: string | null;
+	redirectUrl: string | null;
 }
 
 function getInitialStatus(email: string | null, token: string | null): VerifyStatus {
@@ -27,7 +28,7 @@ function getInitialMessage(email: string | null, token: string | null): string {
 		: "This magic link is missing required verification details.";
 }
 
-export function MagicLinkVerifyClient({ email, token }: MagicLinkVerifyClientProps) {
+export function MagicLinkVerifyClient({ email, token, redirectUrl }: MagicLinkVerifyClientProps) {
 	const hasStarted = useRef(false);
 	const [status, setStatus] = useState<VerifyStatus>(() => getInitialStatus(email, token));
 	const [message, setMessage] = useState(() => getInitialMessage(email, token));
@@ -36,7 +37,7 @@ export function MagicLinkVerifyClient({ email, token }: MagicLinkVerifyClientPro
 		if (hasStarted.current || !email || !token) return;
 		hasStarted.current = true;
 
-		verifyMagicLink(email, token)
+		verifyMagicLink(email, token, redirectUrl)
 			.then(result => {
 				if (!result.success) {
 					setStatus("error");
@@ -52,7 +53,7 @@ export function MagicLinkVerifyClient({ email, token }: MagicLinkVerifyClientPro
 				setStatus("error");
 				setMessage("Magic link verification failed.");
 			});
-	}, [email, token]);
+	}, [email, redirectUrl, token]);
 
 	const icon =
 		status === "success" ? CheckmarkCircle02Icon : status === "error" ? AlertCircleIcon : Loading03Icon;

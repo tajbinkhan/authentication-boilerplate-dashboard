@@ -21,7 +21,7 @@ function getFrontendUrl(): URL | null {
 	}
 }
 
-function resolveSafeRedirectPath(redirectUrl: string | null): string | null {
+function resolveSafeRedirectUrl(redirectUrl: string | null): string | null {
 	if (!redirectUrl) return null;
 
 	const frontendUrl = getFrontendUrl();
@@ -30,7 +30,7 @@ function resolveSafeRedirectPath(redirectUrl: string | null): string | null {
 	try {
 		const parsed = new URL(redirectUrl, frontendUrl);
 		if (parsed.origin !== frontendUrl.origin) return null;
-		return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+		return parsed.toString();
 	} catch {
 		return null;
 	}
@@ -38,14 +38,14 @@ function resolveSafeRedirectPath(redirectUrl: string | null): string | null {
 
 async function saveMagicLinkRedirect(redirectUrl: string | null) {
 	const cookieStore = await cookies();
-	const safeRedirectPath = resolveSafeRedirectPath(redirectUrl);
+	const safeRedirectUrl = resolveSafeRedirectUrl(redirectUrl);
 
-	if (!safeRedirectPath || safeRedirectPath === route.private.dashboard) {
+	if (!safeRedirectUrl) {
 		cookieStore.delete(MAGIC_LINK_REDIRECT_COOKIE);
 		return;
 	}
 
-	cookieStore.set(MAGIC_LINK_REDIRECT_COOKIE, safeRedirectPath, {
+	cookieStore.set(MAGIC_LINK_REDIRECT_COOKIE, safeRedirectUrl, {
 		httpOnly: true,
 		maxAge: MAGIC_LINK_REDIRECT_MAX_AGE_SECONDS,
 		path: "/",
@@ -59,12 +59,12 @@ async function consumeMagicLinkRedirectWithPreferred(
 ): Promise<string> {
 	const cookieStore = await cookies();
 	const savedRedirect = cookieStore.get(MAGIC_LINK_REDIRECT_COOKIE)?.value ?? null;
-	const safePreferredRedirectPath = resolveSafeRedirectPath(redirectUrl);
-	const safeSavedRedirectPath = resolveSafeRedirectPath(savedRedirect);
+	const safePreferredRedirectUrl = resolveSafeRedirectUrl(redirectUrl);
+	const safeSavedRedirectUrl = resolveSafeRedirectUrl(savedRedirect);
 
 	cookieStore.delete(MAGIC_LINK_REDIRECT_COOKIE);
 
-	return safePreferredRedirectPath ?? safeSavedRedirectPath ?? route.private.dashboard;
+	return safePreferredRedirectUrl ?? safeSavedRedirectUrl ?? route.private.dashboard;
 }
 
 export async function googleLogin(
@@ -102,15 +102,15 @@ export async function requestMagicLink(
 	}
 
 	try {
-		const safeRedirectPath = resolveSafeRedirectPath(redirectUrl);
+		const safeRedirectUrl = resolveSafeRedirectUrl(redirectUrl);
 
-		await saveMagicLinkRedirect(safeRedirectPath);
+		await saveMagicLinkRedirect(safeRedirectUrl);
 		await serverApi<ApiResponse<null>>({
 			method: "POST",
 			url: apiRoute.magicLinkRequest,
 			data: {
 				email: parsed.data.email,
-				...(safeRedirectPath ? { redirectUrl: safeRedirectPath } : {})
+				...(safeRedirectUrl ? { redirectUrl: safeRedirectUrl } : {})
 			}
 		});
 
@@ -132,14 +132,14 @@ export async function verifyMagicLink(
 	redirectUrl: string | null = null
 ): Promise<{ success: boolean; message: string; redirectUrl: string }> {
 	try {
-		const safeRedirectPath = resolveSafeRedirectPath(redirectUrl);
+		const safeRedirectUrl = resolveSafeRedirectUrl(redirectUrl);
 		const { headers } = await serverApi<{ message: string; data: User }>({
 			method: "POST",
 			url: apiRoute.magicLinkVerify,
 			data: {
 				email,
 				token,
-				...(safeRedirectPath ? { redirectUrl: safeRedirectPath } : {})
+				...(safeRedirectUrl ? { redirectUrl: safeRedirectUrl } : {})
 			}
 		});
 
@@ -148,7 +148,7 @@ export async function verifyMagicLink(
 		return {
 			success: true,
 			message: "Magic link verified successfully.",
-			redirectUrl: await consumeMagicLinkRedirectWithPreferred(safeRedirectPath)
+			redirectUrl: await consumeMagicLinkRedirectWithPreferred(safeRedirectUrl)
 		};
 	} catch (error) {
 		return {
