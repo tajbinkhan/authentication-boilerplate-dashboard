@@ -3,9 +3,13 @@ import { apiRoute } from "@/routes/routes";
 
 import { createUserListQuery } from "@/features/users/schemas/users-api.schema";
 import type {
+	CreateUserInput,
+	DeleteUserInput,
+	DeleteUserResponse,
 	ManagedUser,
 	RevokeUserSessionsInput,
 	RevokeUserSessionsResponse,
+	UpdateUserInput,
 	UpdateUserRoleInput,
 	UserListQuery,
 	UserListResponse
@@ -19,11 +23,34 @@ export async function listUsers(filters: UserListQuery): Promise<UserListRespons
 	});
 }
 
+export async function createUser(data: CreateUserInput): Promise<ManagedUser> {
+	return apiClient<ManagedUser>({
+		method: "POST",
+		url: apiRoute.users,
+		data
+	});
+}
+
+export async function updateUser({ id, ...data }: UpdateUserInput): Promise<ManagedUser> {
+	return apiClient<ManagedUser>({
+		method: "PATCH",
+		url: apiRoute.user(id),
+		data
+	});
+}
+
 export async function updateUserRole({ id, role }: UpdateUserRoleInput): Promise<ManagedUser> {
 	return apiClient<ManagedUser>({
 		method: "PATCH",
 		url: apiRoute.userRole(id),
 		data: { role }
+	});
+}
+
+export async function deleteUser({ id }: DeleteUserInput): Promise<DeleteUserResponse> {
+	return apiClient<DeleteUserResponse>({
+		method: "DELETE",
+		url: apiRoute.user(id)
 	});
 }
 

@@ -135,14 +135,16 @@ function UserIdentityCell({ user }: { user: ManagedUser }) {
 
 	return (
 		<div className="flex min-w-0 items-center gap-3">
-			<Avatar className="size-9 rounded-md">
-				<AvatarImage src={user.image ?? ""} alt={displayName} />
-				<AvatarFallback className="rounded-md">{getUserInitials(displayName)}</AvatarFallback>
+			<Avatar className="size-9">
+				<AvatarImage src={user.image ?? undefined} alt={displayName} />
+				<AvatarFallback>{getUserInitials(displayName)}</AvatarFallback>
 			</Avatar>
 			<div className="min-w-0">
 				<div className="truncate font-medium">{displayName}</div>
 				<div className="text-muted-foreground truncate text-xs">{user.email}</div>
-				{user.phone ? <div className="text-muted-foreground truncate text-xs">{user.phone}</div> : null}
+				{user.phone ? (
+					<div className="text-muted-foreground truncate text-xs">{user.phone}</div>
+				) : null}
 			</div>
 		</div>
 	);
@@ -154,3 +156,4 @@ function UserRoleBadge({ role }: { role: UserRole }) {
 
 	return <Badge variant={variant}>{formatUserRole(role)}</Badge>;
 }
+

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateUserDialog } from "@/features/users/components/create-user-dialog";
 import { UserErrorAlert } from "@/features/users/components/user-error-alert";
 import { UserListProvider, useUserList } from "@/features/users/context/user-list-context";
 import { ApiError } from "@/lib/api/errors";
@@ -47,6 +48,7 @@ function UsersPageContent() {
 							Review accounts, roles, verification, and active sessions.
 						</p>
 					</div>
+					<CreateUserDialog />
 				</div>
 				<Card>
 					<CardHeader>

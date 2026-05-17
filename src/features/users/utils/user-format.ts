@@ -35,6 +35,11 @@ export function getAssignableRoles(currentUser: User | null | undefined): UserRo
 	return [];
 }
 
+export function getDefaultAssignableRole(currentUser: User | null | undefined): UserRole {
+	const assignableRoles = getAssignableRoles(currentUser);
+	return assignableRoles.includes("USER") ? "USER" : (assignableRoles[0] ?? "USER");
+}
+
 export function formatRevokedUserSessionsCount(count: number): string {
 	if (count === 0) {
 		return "No active sessions to revoke";

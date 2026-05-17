@@ -23,6 +23,7 @@ export const apiRoute = {
 	me: "/auth/me",
 	logout: "/auth/logout",
 	users: "/users",
+	user: (id: string) => `/users/${id}`,
 	userRole: (id: string) => `/users/${id}/role`,
 	userSessionsRevoke: (id: string) => `/users/${id}/sessions/revoke`,
 	sessions: "/auth/sessions",

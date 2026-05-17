@@ -41,7 +41,7 @@ export function NavUser(props: NavUserComponentProps) {
 	}
 
 	const userName = user.name ? user.name : user.email;
-	const userImage = user?.image ? user?.image : "";
+	const userImage = user.image || undefined;
 
 	const handleLogout = async () => {
 		await axiosClientApi

@@ -42,9 +42,36 @@ export interface UserListQuery {
 	dir: UserSortDirection;
 }
 
+export interface CreateUserInput {
+	name?: string | null;
+	email: string;
+	password?: string | null;
+	phone?: string | null;
+	emailVerified?: boolean;
+	is2faEnabled?: boolean;
+	role: UserRole;
+}
+
+export interface UpdateUserInput {
+	id: string;
+	name?: string | null;
+	email?: string;
+	phone?: string | null;
+	emailVerified?: boolean;
+	is2faEnabled?: boolean;
+}
+
 export interface UpdateUserRoleInput {
 	id: string;
 	role: UserRole;
+}
+
+export interface DeleteUserInput {
+	id: string;
+}
+
+export interface DeleteUserResponse {
+	deleted: boolean;
 }
 
 export interface RevokeUserSessionsInput {
