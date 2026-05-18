@@ -18,6 +18,8 @@ async function handler(req: NextRequest, context: { params: Promise<{ path: stri
 	headers.delete("connection");
 	headers.delete("content-length");
 	headers.delete("transfer-encoding");
+	headers.delete("origin"); // ✅ Add this
+	headers.delete("referer"); // ✅ Add this too
 
 	const body = req.method === "GET" || req.method === "HEAD" ? undefined : await req.arrayBuffer();
 
@@ -35,15 +37,20 @@ async function handler(req: NextRequest, context: { params: Promise<{ path: stri
 	responseHeaders.delete("content-length");
 	responseHeaders.delete("transfer-encoding");
 
-	const response = new NextResponse(
-		req.method === "HEAD" ? null : await backendRes.arrayBuffer(),
-		{
-			status: backendRes.status,
-			headers: responseHeaders
-		}
-	);
+	const response = new NextResponse(req.method === "HEAD" ? null : await backendRes.arrayBuffer(), {
+		status: backendRes.status,
+		headers: responseHeaders
+	});
 
 	return response;
 }
 
-export { handler as DELETE, handler as GET, handler as HEAD, handler as PATCH, handler as POST, handler as PUT };
+export {
+	handler as DELETE,
+	handler as GET,
+	handler as HEAD,
+	handler as PATCH,
+	handler as POST,
+	handler as PUT
+};
+

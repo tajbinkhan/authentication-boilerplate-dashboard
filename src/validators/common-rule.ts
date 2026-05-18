@@ -32,7 +32,6 @@ const baseString = (
 	let schema = z
 		.string({
 			error: issue => {
-				console.log(issue);
 				return issue.input === undefined || issue.input === null || issue.input === ""
 					? makeError(name, "required")
 					: makeError(name, "invalid");
@@ -308,6 +307,31 @@ export const validateEmail = baseEmail("Email", { max: 255 });
 export const validateUrl = (name: string) => baseUrl(name, { max: 2048 });
 
 export const validateUUID = (name: string) => baseUUID(name);
+
+export const validateOptionalString = (name: string, opts?: { max?: number }) =>
+	z
+		.string({
+			error: issue =>
+				issue.input === undefined || issue.input === null
+					? makeError(name, "required")
+					: makeError(name, "invalid")
+		})
+		.trim()
+		.max(opts?.max ?? 255, {
+			error: makeError(
+				name,
+				"limit",
+				zodMessages.error.limit.stringMax(name, opts?.max ?? 255)
+			)
+		});
+
+export const validateOptionalPhoneNumber = (name = "Phone") =>
+	validateOptionalString(name, { max: 32 }).refine(
+		value => !value || /^\+[1-9]\d{7,14}$/.test(value),
+		{
+			error: `${name} must be a valid international phone number`
+		}
+	);
 
 // export const validatePhoneNumber = (name = "Phone") =>
 // 	baseString(name, { min: 1 })
