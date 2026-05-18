@@ -21,7 +21,7 @@ export default function ProfilePage() {
 						Manage your account profile and security settings.
 					</p>
 				</div>
-				<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+				<div className="grid gap-6 xl:grid-cols-2">
 					<ProfileUpdateCard />
 					<TwoFactorSecurityCard />
 				</div>
@@ -29,3 +29,4 @@ export default function ProfilePage() {
 		</>
 	);
 }
+

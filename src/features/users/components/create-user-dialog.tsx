@@ -1,9 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusSignCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,7 @@ import {
 	type UserFormValues,
 	UserFormFields
 } from "@/features/users/components/user-form-fields";
+import { createUserFormSchema } from "@/features/users/schemas/user-form.schema";
 import {
 	getAssignableRoles,
 	getDefaultAssignableRole
@@ -35,48 +38,44 @@ export function CreateUserDialog() {
 	const createUserMutation = useCreateUserMutation();
 	const assignableRoles = useMemo(() => getAssignableRoles(currentUser), [currentUser]);
 	const [open, setOpen] = useState(false);
-	const [values, setValues] = useState<UserFormValues>(() => createInitialValues(currentUser));
-	const canSubmit =
-		Boolean(values.email.trim()) && assignableRoles.length > 0 && !createUserMutation.isPending;
+
+	const form = useForm<UserFormValues>({
+		resolver: zodResolver(createUserFormSchema),
+		defaultValues: createInitialValues(currentUser)
+	});
 
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (nextOpen) {
-			setValues(createInitialValues(currentUser));
+			form.reset(createInitialValues(currentUser));
 		}
 
 		setOpen(nextOpen);
 	};
 
-	const handleValueChange = <TKey extends keyof UserFormValues>(
-		key: TKey,
-		value: UserFormValues[TKey]
-	) => {
-		setValues(currentValues => ({ ...currentValues, [key]: value }));
-	};
-
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-
-		createUserMutation.mutate(
-			{
-				name: emptyToNull(values.name),
-				email: values.email.trim().toLowerCase(),
-				password: emptyToNull(values.password),
-				phone: emptyToNull(values.phone),
-				emailVerified: values.emailVerified,
-				role: values.role
-			},
-			{
-				onSuccess: () => {
-					toast.success("User created");
-					setOpen(false);
+	const onSubmit = useCallback(
+		(values: UserFormValues) => {
+			createUserMutation.mutate(
+				{
+					name: emptyToNull(values.name),
+					email: values.email.trim().toLowerCase(),
+					password: emptyToNull(values.password),
+					phone: emptyToNull(values.phone),
+					emailVerified: values.emailVerified,
+					role: values.role
 				},
-				onError: error => {
-					handleRequestError(error, router, "Failed to create user");
+				{
+					onSuccess: () => {
+						toast.success("User created");
+						setOpen(false);
+					},
+					onError: error => {
+						handleRequestError(error, router, "Failed to create user");
+					}
 				}
-			}
-		);
-	};
+			);
+		},
+		[createUserMutation, router]
+	);
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
@@ -85,31 +84,31 @@ export function CreateUserDialog() {
 				Create user
 			</Button>
 			<DialogContent className="sm:max-w-2xl">
-				<form onSubmit={handleSubmit} className="grid gap-6">
-					<DialogHeader>
-						<DialogTitle>Create user</DialogTitle>
-						<DialogDescription>Add a managed account with the allowed role hierarchy.</DialogDescription>
-					</DialogHeader>
-					<UserFormFields
-						values={values}
-						onChange={handleValueChange}
-						idPrefix="create-user"
-						roleOptions={assignableRoles}
-						showPassword
-						showRole
-						disabled={createUserMutation.isPending}
-					/>
-					<DialogFooter>
-						<DialogClose asChild>
-							<Button type="button" variant="outline">
-								Cancel
+				<FormProvider {...form}>
+					<form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
+						<DialogHeader>
+							<DialogTitle>Create user</DialogTitle>
+							<DialogDescription>Add a managed account with the allowed role hierarchy.</DialogDescription>
+						</DialogHeader>
+						<UserFormFields
+							idPrefix="create-user"
+							roleOptions={assignableRoles}
+							showPassword
+							showRole
+							disabled={createUserMutation.isPending}
+						/>
+						<DialogFooter>
+							<DialogClose asChild>
+								<Button type="button" variant="outline">
+									Cancel
+								</Button>
+							</DialogClose>
+							<Button type="submit" disabled={createUserMutation.isPending}>
+								{createUserMutation.isPending ? "Creating" : "Create user"}
 							</Button>
-						</DialogClose>
-						<Button type="submit" disabled={!canSubmit}>
-							{createUserMutation.isPending ? "Creating" : "Create user"}
-						</Button>
-					</DialogFooter>
-				</form>
+						</DialogFooter>
+					</form>
+				</FormProvider>
 			</DialogContent>
 		</Dialog>
 	);

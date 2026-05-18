@@ -1,5 +1,7 @@
 "use client";
 
+import { useFormContext, Controller } from "react-hook-form";
+
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,8 +25,6 @@ export interface UserFormValues {
 }
 
 interface UserFormFieldsProps {
-	values: UserFormValues;
-	onChange: <TKey extends keyof UserFormValues>(key: TKey, value: UserFormValues[TKey]) => void;
 	idPrefix: string;
 	roleOptions?: UserRole[];
 	showPassword?: boolean;
@@ -33,14 +33,18 @@ interface UserFormFieldsProps {
 }
 
 export function UserFormFields({
-	values,
-	onChange,
 	idPrefix,
 	roleOptions = [],
 	showPassword = false,
 	showRole = false,
 	disabled = false
 }: UserFormFieldsProps) {
+	const {
+		register,
+		control,
+		formState: { errors }
+	} = useFormContext<UserFormValues>();
+
 	return (
 		<FieldGroup className="gap-4">
 			<div className="grid gap-4 sm:grid-cols-2">
@@ -48,8 +52,7 @@ export function UserFormFields({
 					<FieldLabel htmlFor={`${idPrefix}-name`}>Name</FieldLabel>
 					<Input
 						id={`${idPrefix}-name`}
-						value={values.name}
-						onChange={event => onChange("name", event.target.value)}
+						{...register("name")}
 						placeholder="Full name"
 						disabled={disabled}
 					/>
@@ -59,10 +62,8 @@ export function UserFormFields({
 					<Input
 						id={`${idPrefix}-email`}
 						type="email"
-						value={values.email}
-						onChange={event => onChange("email", event.target.value)}
+						{...register("email")}
 						placeholder="name@example.com"
-						required
 						disabled={disabled}
 					/>
 				</Field>
@@ -73,8 +74,7 @@ export function UserFormFields({
 					<Input
 						id={`${idPrefix}-phone`}
 						type="tel"
-						value={values.phone}
-						onChange={event => onChange("phone", event.target.value)}
+						{...register("phone")}
 						placeholder="+14155552671"
 						disabled={disabled}
 					/>
@@ -82,22 +82,28 @@ export function UserFormFields({
 				{showRole ? (
 					<Field>
 						<FieldLabel htmlFor={`${idPrefix}-role`}>Role</FieldLabel>
-						<Select
-							value={values.role}
-							onValueChange={value => onChange("role", value as UserRole)}
-							disabled={disabled || roleOptions.length === 0}
-						>
-							<SelectTrigger id={`${idPrefix}-role`} className="w-full">
-								<SelectValue placeholder="Select role" />
-							</SelectTrigger>
-							<SelectContent>
-								{roleOptions.map(role => (
-									<SelectItem key={role} value={role}>
-										{formatUserRole(role)}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+						<Controller
+							name="role"
+							control={control}
+							render={({ field }) => (
+								<Select
+									value={field.value}
+									onValueChange={value => field.onChange(value as UserRole)}
+									disabled={disabled || roleOptions.length === 0}
+								>
+									<SelectTrigger id={`${idPrefix}-role`} className="w-full">
+										<SelectValue placeholder="Select role" />
+									</SelectTrigger>
+									<SelectContent>
+										{roleOptions.map(role => (
+											<SelectItem key={role} value={role}>
+												{formatUserRole(role)}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							)}
+						/>
 					</Field>
 				) : null}
 				{showPassword ? (
@@ -106,8 +112,7 @@ export function UserFormFields({
 						<Input
 							id={`${idPrefix}-password`}
 							type="password"
-							value={values.password}
-							onChange={event => onChange("password", event.target.value)}
+							{...register("password")}
 							placeholder="Optional"
 							disabled={disabled}
 						/>
@@ -120,11 +125,17 @@ export function UserFormFields({
 						<FieldLabel htmlFor={`${idPrefix}-email-verified`}>Email verified</FieldLabel>
 						<FieldDescription>Mark this account as verified.</FieldDescription>
 					</div>
-					<Switch
-						id={`${idPrefix}-email-verified`}
-						checked={values.emailVerified}
-						onCheckedChange={checked => onChange("emailVerified", checked)}
-						disabled={disabled}
+					<Controller
+						name="emailVerified"
+						control={control}
+						render={({ field }) => (
+							<Switch
+								id={`${idPrefix}-email-verified`}
+								checked={field.value}
+								onCheckedChange={field.onChange}
+								disabled={disabled}
+							/>
+						)}
 					/>
 				</Field>
 			</div>

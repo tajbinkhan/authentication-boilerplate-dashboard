@@ -1,5 +1,8 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -11,16 +14,17 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { SyntheticEvent } from "react";
+import {
+	twoFactorCodeFormSchema,
+	type TwoFactorCodeFormValues
+} from "@/features/auth/two-factor/schemas/two-factor.schema";
 
 export interface CodeDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	title: string;
 	description: string;
-	code: string;
-	onCodeChange: (code: string) => void;
-	onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
+	onSubmit: (values: TwoFactorCodeFormValues) => void;
 	isPending: boolean;
 	actionLabel: string;
 	variant?: "default" | "destructive";
@@ -31,17 +35,33 @@ export function CodeDialog({
 	onOpenChange,
 	title,
 	description,
-	code,
-	onCodeChange,
 	onSubmit,
 	isPending,
 	actionLabel,
 	variant = "default"
 }: CodeDialogProps) {
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors }
+	} = useForm<TwoFactorCodeFormValues>({
+		resolver: zodResolver(twoFactorCodeFormSchema),
+		defaultValues: { code: "" }
+	});
+
+	const handleOpenChange = (nextOpen: boolean) => {
+		if (!nextOpen) {
+			reset();
+		}
+
+		onOpenChange(nextOpen);
+	};
+
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent>
-				<form onSubmit={onSubmit} className="grid gap-6">
+				<form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
 					<DialogHeader>
 						<DialogTitle>{title}</DialogTitle>
 						<div className="text-muted-foreground text-sm">{description}</div>
@@ -50,8 +70,7 @@ export function CodeDialog({
 						<FieldLabel htmlFor={`${actionLabel}-code`}>Code</FieldLabel>
 						<Input
 							id={`${actionLabel}-code`}
-							value={code}
-							onChange={event => onCodeChange(event.target.value)}
+							{...register("code")}
 							autoComplete="one-time-code"
 							placeholder="123456 or ABCDE-F1234"
 							disabled={isPending}
@@ -63,7 +82,7 @@ export function CodeDialog({
 								Cancel
 							</Button>
 						</DialogClose>
-						<Button type="submit" variant={variant} disabled={!code.trim() || isPending}>
+						<Button type="submit" variant={variant} disabled={isPending}>
 							{isPending ? "Working" : actionLabel}
 						</Button>
 					</DialogFooter>

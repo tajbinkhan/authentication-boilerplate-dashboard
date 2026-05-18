@@ -1,14 +1,20 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading03Icon, LockKeyIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useState, type FormEvent } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useVerifyTwoFactorMutation } from "@/features/auth/two-factor/actions/two-factor.mutations";
+import {
+	twoFactorCodeFormSchema,
+	type TwoFactorCodeFormValues
+} from "@/features/auth/two-factor/schemas/two-factor.schema";
 import axiosClientApi from "@/lib/client-api";
 import { apiRoute, route } from "@/routes/routes";
 
@@ -20,13 +26,19 @@ const defaultRedirectUrl = `${process.env.NEXT_PUBLIC_FRONTEND_URL}${route.priva
 
 export function TwoFactorVerifyClient({ redirectUrl }: TwoFactorVerifyClientProps) {
 	const verifyTwoFactorMutation = useVerifyTwoFactorMutation();
-	const [code, setCode] = useState("");
 
-	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors }
+	} = useForm<TwoFactorCodeFormValues>({
+		resolver: zodResolver(twoFactorCodeFormSchema),
+		defaultValues: { code: "" }
+	});
 
+	const onSubmit = (values: TwoFactorCodeFormValues) => {
 		verifyTwoFactorMutation.mutate(
-			{ code },
+			{ code: values.code },
 			{
 				onSuccess: () => {
 					window.location.replace(resolveSafeRedirectUrl(redirectUrl));
@@ -60,19 +72,22 @@ export function TwoFactorVerifyClient({ redirectUrl }: TwoFactorVerifyClientProp
 					</p>
 				</div>
 
-				<form className="space-y-4" onSubmit={handleSubmit}>
-					<Input
-						value={code}
-						onChange={event => setCode(event.target.value)}
-						placeholder="123456 or ABCDE-F1234"
-						autoComplete="one-time-code"
-						disabled={verifyTwoFactorMutation.isPending}
-						className="h-12 rounded-xl text-center tracking-widest"
-					/>
+				<form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+					<Field>
+						<FieldLabel htmlFor="two-factor-verify-code">Code</FieldLabel>
+						<Input
+							id="two-factor-verify-code"
+							{...register("code")}
+							placeholder="123456 or ABCDE-F1234"
+							autoComplete="one-time-code"
+							disabled={verifyTwoFactorMutation.isPending}
+							className="h-12 rounded-xl text-center tracking-widest"
+						/>
+					</Field>
 					<Button
 						type="submit"
 						className="h-11 w-full rounded-xl"
-						disabled={!code.trim() || verifyTwoFactorMutation.isPending}
+						disabled={verifyTwoFactorMutation.isPending}
 					>
 						{verifyTwoFactorMutation.isPending ? (
 							<>

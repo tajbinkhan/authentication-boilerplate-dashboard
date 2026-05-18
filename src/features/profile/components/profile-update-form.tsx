@@ -1,7 +1,11 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Cancel01Icon, ImageUpload01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { ApiError } from "@/lib/api/errors";
@@ -16,11 +20,12 @@ import {
 	useUpdateProfileImageMutation,
 	useUpdateProfileMutation
 } from "@/features/profile/actions/profile.mutations";
+import {
+	PROFILE_IMAGE_ACCEPT,
+	type ProfileUpdateValues,
+	profileUpdateSchema
+} from "@/features/profile/schemas/profile.schema";
 import { route } from "@/routes/routes";
-
-const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
-const ACCEPTED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
-const ACCEPTED_AVATAR_EXTENSIONS = ".png,.jpg,.jpeg,.webp";
 
 interface ProfileUpdateFormProps {
 	user: User;
@@ -50,16 +55,56 @@ export function ProfileUpdateForm({ user, setUser, router }: ProfileUpdateFormPr
 	const updateProfileMutation = useUpdateProfileMutation();
 	const updateProfileImageMutation = useUpdateProfileImageMutation();
 	const fileInputRef = useRef<HTMLInputElement>(null);
-
-	const [name, setName] = useState(user.name ?? "");
-	const [phone, setPhone] = useState(user.phone ?? "");
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
-	const [fileError, setFileError] = useState<string | null>(null);
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-	const previewUrl = useMemo(() => {
-		if (!selectedFile) return null;
-		return URL.createObjectURL(selectedFile);
-	}, [selectedFile]);
+	const {
+		register,
+		handleSubmit,
+		control,
+		setValue,
+		resetField,
+		formState: { errors }
+	} = useForm<ProfileUpdateValues>({
+		resolver: zodResolver(profileUpdateSchema),
+		defaultValues: {
+			name: user.name ?? "",
+			phone: user.phone ?? "",
+			avatar: null
+		}
+	});
+
+	const { name: watchedName, phone: watchedPhone } = useWatch({ control });
+
+	const isSaving = updateProfileMutation.isPending || updateProfileImageMutation.isPending;
+
+	const displayName = user.name?.trim() || user.email || "User";
+	const imageSrc = previewUrl ?? user.image ?? undefined;
+
+	const handleFileChange = useCallback(
+		(event: React.ChangeEvent<HTMLInputElement>) => {
+			const file = event.target.files?.[0] ?? null;
+			setSelectedFile(file);
+			setValue("avatar", file, { shouldValidate: true });
+
+			if (file) {
+				const url = URL.createObjectURL(file);
+				setPreviewUrl(url);
+			} else {
+				setPreviewUrl(null);
+			}
+		},
+		[setValue]
+	);
+
+	const handleClearSelectedImage = useCallback(() => {
+		setSelectedFile(null);
+		if (previewUrl) {
+			URL.revokeObjectURL(previewUrl);
+		}
+		setPreviewUrl(null);
+		setValue("avatar", null, { shouldValidate: true });
+	}, [previewUrl, setValue]);
 
 	useEffect(() => {
 		return () => {
@@ -69,182 +114,166 @@ export function ProfileUpdateForm({ user, setUser, router }: ProfileUpdateFormPr
 		};
 	}, [previewUrl]);
 
-	const isSaving = updateProfileMutation.isPending || updateProfileImageMutation.isPending;
-	const normalizedName = name.trim();
-	const normalizedPhone = phone.trim();
-	const hasProfileChanges =
-		normalizedName !== (user.name ?? "") || normalizedPhone !== (user.phone ?? "");
-	const canSubmit = !isSaving && !fileError && Boolean(hasProfileChanges || selectedFile);
-	const displayName = user.name?.trim() || user.email || "User";
-	const imageSrc = previewUrl ?? user.image ?? undefined;
-
-	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-
-		if (!file) {
-			setSelectedFile(null);
-			setFileError(null);
-			return;
-		}
-
-		const validationError = validateAvatarFile(file);
-		if (validationError) {
-			setSelectedFile(null);
-			setFileError(validationError);
-			event.target.value = "";
-			return;
-		}
-
-		setSelectedFile(file);
-		setFileError(null);
-	};
-
-	const handleClearSelectedImage = () => {
-		setSelectedFile(null);
-		setFileError(null);
-		if (fileInputRef.current) {
+	useEffect(() => {
+		if (!selectedFile && fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
-	};
+	}, [selectedFile]);
 
-	const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		if (!canSubmit) return;
+	const hasNameChange = watchedName?.trim() !== (user.name ?? "");
+	const hasPhoneChange = watchedPhone?.trim() !== (user.phone ?? "");
+	const hasAvatarChange = selectedFile !== null;
+	const hasChanges = hasNameChange || hasPhoneChange || hasAvatarChange;
+	const canSubmit = hasChanges && !isSaving && !errors.avatar;
 
-		const avatarFile = selectedFile;
-		let latestUser = user;
+	const onSubmit = useCallback(
+		async (data: ProfileUpdateValues) => {
+			let latestUser = user;
 
-		try {
-			if (hasProfileChanges) {
-				latestUser = await updateProfileMutation.mutateAsync({
-					name: normalizedName,
-					phone: normalizedPhone
-				});
-				setUser(latestUser);
-				setName(latestUser.name ?? "");
-				setPhone(latestUser.phone ?? "");
-			}
-		} catch (error) {
-			handleRequestError(error, router, "Failed to update profile");
-			return;
-		}
-
-		if (avatarFile) {
 			try {
-				latestUser = await updateProfileImageMutation.mutateAsync(avatarFile);
-				setUser(latestUser);
-				handleClearSelectedImage();
-			} catch (error) {
-				if (isUnauthorizedError(error)) {
-					handleRequestError(error, router, "Failed to upload profile image");
-					return;
+				if (hasNameChange || hasPhoneChange) {
+					latestUser = await updateProfileMutation.mutateAsync({
+						name: data.name?.trim() ?? "",
+						phone: data.phone?.trim() ?? ""
+					});
+					setUser(latestUser);
+					resetField("name");
+					resetField("phone");
 				}
-
-				toast.error(
-					hasProfileChanges
-						? "Profile details saved, but the image upload failed"
-						: "Failed to upload profile image"
-				);
+			} catch (error) {
+				handleRequestError(error, router, "Failed to update profile");
 				return;
 			}
-		}
 
-		toast.success("Profile updated");
-	};
+			if (selectedFile) {
+				try {
+					latestUser = await updateProfileImageMutation.mutateAsync(selectedFile);
+					setUser(latestUser);
+					handleClearSelectedImage();
+				} catch (error) {
+					if (isUnauthorizedError(error)) {
+						handleRequestError(error, router, "Failed to upload profile image");
+						return;
+					}
+
+					toast.error(
+						hasNameChange || hasPhoneChange
+							? "Profile details saved, but the image upload failed"
+							: "Failed to upload profile image"
+					);
+					return;
+				}
+			}
+
+			toast.success("Profile updated");
+		},
+		[
+			user,
+			hasNameChange,
+			hasPhoneChange,
+			selectedFile,
+			updateProfileMutation,
+			updateProfileImageMutation,
+			setUser,
+			router,
+			resetField,
+			handleClearSelectedImage
+		]
+	);
 
 	return (
-		<form onSubmit={handleSubmit} className="grid gap-6">
-			<FieldGroup className="gap-5">
-				<Field>
-					<FieldLabel htmlFor="profile-avatar">Profile image</FieldLabel>
-					<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-						<Avatar className="size-20" size="lg">
-							<AvatarImage src={imageSrc} alt={displayName} />
-							<AvatarFallback className="text-lg">{getUserInitials(displayName)}</AvatarFallback>
-						</Avatar>
-						<div className="grid flex-1 gap-2">
-							<Input
-								ref={fileInputRef}
-								id="profile-avatar"
-								type="file"
-								accept={ACCEPTED_AVATAR_EXTENSIONS}
-								onChange={handleFileChange}
+		<form onSubmit={handleSubmit(onSubmit)} className="grid gap-6">
+			<div className="flex flex-col flex-wrap gap-6 @md:flex-row">
+				<div className="flex flex-col items-center gap-4">
+					<Avatar className="size-32">
+						<AvatarImage src={imageSrc} alt={displayName} />
+						<AvatarFallback className="text-2xl">{getUserInitials(displayName)}</AvatarFallback>
+					</Avatar>
+					<input
+						ref={fileInputRef}
+						id="profile-avatar"
+						type="file"
+						accept={PROFILE_IMAGE_ACCEPT}
+						onChange={handleFileChange}
+						disabled={isSaving}
+						hidden
+					/>
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => fileInputRef.current?.click()}
+						disabled={isSaving}
+						className="self-center"
+					>
+						Choose file
+					</Button>
+					{selectedFile ? (
+						<div className="flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm">
+							<span className="truncate">{selectedFile.name}</span>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-xs"
+								onClick={handleClearSelectedImage}
 								disabled={isSaving}
-							/>
-							<FieldDescription>PNG, JPG, or WEBP up to 2MB.</FieldDescription>
-							{selectedFile ? (
-								<div className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm">
-									<span className="truncate">{selectedFile.name}</span>
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon-xs"
-										onClick={handleClearSelectedImage}
-										disabled={isSaving}
-										aria-label="Clear selected profile image"
-									>
-										<HugeiconsIcon icon={Cancel01Icon} />
-									</Button>
-								</div>
-							) : null}
-							<FieldError>{fileError}</FieldError>
+								aria-label="Clear selected profile image"
+							>
+								<HugeiconsIcon icon={Cancel01Icon} />
+							</Button>
 						</div>
-					</div>
-				</Field>
-
-				<div className="grid gap-4 sm:grid-cols-2">
-					<Field>
-						<FieldLabel htmlFor="profile-name">Name</FieldLabel>
-						<Input
-							id="profile-name"
-							value={name}
-							onChange={event => setName(event.target.value)}
-							placeholder="Full name"
-							disabled={isSaving}
-						/>
-					</Field>
-					<Field>
-						<FieldLabel htmlFor="profile-email">Email</FieldLabel>
-						<Input id="profile-email" type="email" value={user.email} disabled readOnly />
-					</Field>
+					) : null}
+					<FieldError>{errors.avatar?.message}</FieldError>
+					<FieldDescription>PNG, JPG, or WEBP up to 2MB.</FieldDescription>
 				</div>
 
-				<Field>
-					<FieldLabel htmlFor="profile-phone">Phone</FieldLabel>
-					<Input
-						id="profile-phone"
-						type="tel"
-						value={phone}
-						onChange={event => setPhone(event.target.value)}
-						placeholder="+14155552671"
-						disabled={isSaving}
-					/>
-				</Field>
-			</FieldGroup>
+				<div className="flex min-w-0 flex-1 flex-col flex-wrap gap-6">
+					<FieldGroup className="gap-5">
+						<div className="grid min-w-20 gap-4 sm:grid-cols-2">
+							<Field>
+								<FieldLabel htmlFor="profile-name">Name</FieldLabel>
+								<Input
+									id="profile-name"
+									{...register("name")}
+									placeholder="Full name"
+									disabled={isSaving}
+								/>
+							</Field>
+							<Field>
+								<FieldLabel htmlFor="profile-email">Email</FieldLabel>
+								<Input id="profile-email" type="email" value={user.email} disabled readOnly />
+							</Field>
+						</div>
 
-			<div className="flex justify-end">
-				<Button type="submit" disabled={!canSubmit}>
-					{isSaving ? (
-						<HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
-					) : (
-						<HugeiconsIcon icon={ImageUpload01Icon} data-icon="inline-start" />
-					)}
-					{isSaving ? "Saving" : "Save changes"}
-				</Button>
+						<Field className="min-w-20">
+							<FieldLabel htmlFor="profile-phone">Phone</FieldLabel>
+							<Input
+								id="profile-phone"
+								type="tel"
+								{...register("phone")}
+								placeholder="+14155552671"
+								disabled={isSaving}
+							/>
+						</Field>
+					</FieldGroup>
+
+					<div className="flex justify-end">
+						<Button type="submit" disabled={!canSubmit}>
+							{isSaving ? (
+								<>
+									<HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
+									Saving
+								</>
+							) : (
+								<>
+									<HugeiconsIcon icon={ImageUpload01Icon} data-icon="inline-start" />
+									Save changes
+								</>
+							)}
+						</Button>
+					</div>
+				</div>
 			</div>
 		</form>
 	);
-}
-
-function validateAvatarFile(file: File): string | null {
-	if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) {
-		return "Choose a PNG, JPG, or WEBP image.";
-	}
-
-	if (file.size > MAX_AVATAR_BYTES) {
-		return "Choose an image smaller than 2MB.";
-	}
-
-	return null;
 }
 

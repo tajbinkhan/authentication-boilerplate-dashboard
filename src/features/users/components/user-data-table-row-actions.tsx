@@ -11,7 +11,10 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
 	AlertDialog,
@@ -60,6 +63,7 @@ import {
 	type UserFormValues,
 	UserFormFields
 } from "@/features/users/components/user-form-fields";
+import { editUserFormSchema } from "@/features/users/schemas/user-form.schema";
 import type { ManagedUser, UserRole } from "@/features/users/types/users.types";
 import {
 	canManageUser,
@@ -88,30 +92,25 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
 	const [resetTwoFactorDialogOpen, setResetTwoFactorDialogOpen] = useState(false);
-	const [editValues, setEditValues] = useState<UserFormValues>(() => createEditValues(user));
 	const [nextRole, setNextRole] = useState<UserRole>(user.role);
 
 	const manageable = canManageUser(currentUser, user);
 	const assignableRoles = useMemo(() => getAssignableRoles(currentUser), [currentUser]);
-	const canSubmitEdit =
-		manageable && Boolean(editValues.email.trim()) && !updateUserMutation.isPending;
 	const canSubmitRole = manageable && nextRole !== user.role && !updateUserRoleMutation.isPending;
 
-	const handleEditValueChange = <TKey extends keyof UserFormValues>(
-		key: TKey,
-		value: UserFormValues[TKey]
-	) => {
-		setEditValues(currentValues => ({ ...currentValues, [key]: value }));
-	};
+	const editForm = useForm<UserFormValues>({
+		resolver: zodResolver(editUserFormSchema),
+		defaultValues: createEditValues(user)
+	});
 
-	const handleUpdateUser = () => {
+	const handleUpdateUser = (values: UserFormValues) => {
 		updateUserMutation.mutate(
 			{
 				id: user.id,
-				name: emptyToNull(editValues.name),
-				email: editValues.email.trim().toLowerCase(),
-				phone: emptyToNull(editValues.phone),
-				emailVerified: editValues.emailVerified
+				name: emptyToNull(values.name),
+				email: values.email.trim().toLowerCase(),
+				phone: emptyToNull(values.phone),
+				emailVerified: values.emailVerified
 			},
 			{
 				onSuccess: () => {
@@ -200,7 +199,7 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 						disabled={!manageable}
 						onSelect={event => {
 							event.preventDefault();
-							setEditValues(createEditValues(user));
+							editForm.reset(createEditValues(user));
 							setEditDialogOpen(true);
 						}}
 					>
@@ -257,34 +256,31 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 
 			<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
 				<DialogContent className="sm:max-w-2xl">
-					<form
-						onSubmit={event => {
-							event.preventDefault();
-							handleUpdateUser();
-						}}
-						className="grid gap-6"
-					>
-						<DialogHeader>
-							<DialogTitle>Edit user</DialogTitle>
-							<DialogDescription>{user.email}</DialogDescription>
-						</DialogHeader>
-						<UserFormFields
-							values={editValues}
-							onChange={handleEditValueChange}
-							idPrefix={`edit-user-${user.id}`}
-							disabled={updateUserMutation.isPending}
-						/>
-						<DialogFooter>
-							<DialogClose asChild>
-								<Button type="button" variant="outline">
-									Cancel
+					<FormProvider {...editForm}>
+						<form
+							onSubmit={editForm.handleSubmit(handleUpdateUser)}
+							className="grid gap-6"
+						>
+							<DialogHeader>
+								<DialogTitle>Edit user</DialogTitle>
+								<DialogDescription>{user.email}</DialogDescription>
+							</DialogHeader>
+							<UserFormFields
+								idPrefix={`edit-user-${user.id}`}
+								disabled={updateUserMutation.isPending}
+							/>
+							<DialogFooter>
+								<DialogClose asChild>
+									<Button type="button" variant="outline">
+										Cancel
+									</Button>
+								</DialogClose>
+								<Button type="submit" disabled={updateUserMutation.isPending}>
+									{updateUserMutation.isPending ? "Saving" : "Save changes"}
 								</Button>
-							</DialogClose>
-							<Button type="submit" disabled={!canSubmitEdit}>
-								{updateUserMutation.isPending ? "Saving" : "Save changes"}
-							</Button>
-						</DialogFooter>
-					</form>
+							</DialogFooter>
+						</form>
+					</FormProvider>
 				</DialogContent>
 			</Dialog>
 

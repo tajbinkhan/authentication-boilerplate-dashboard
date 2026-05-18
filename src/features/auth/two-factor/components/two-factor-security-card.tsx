@@ -1,9 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading03Icon, LockKeyIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import { SyntheticEvent, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -34,6 +36,10 @@ import {
 	useStartTwoFactorSetupMutation
 } from "@/features/auth/two-factor/actions/two-factor.mutations";
 import { useTwoFactorStatusQuery } from "@/features/auth/two-factor/actions/two-factor.queries";
+import {
+	twoFactorCodeFormSchema,
+	type TwoFactorCodeFormValues
+} from "@/features/auth/two-factor/schemas/two-factor.schema";
 import type { TwoFactorSetupStart } from "@/features/auth/two-factor/types/two-factor.types";
 import { CodeDialog } from "./code-dialog";
 import { RecoveryCodesContent } from "./recovery-codes-content";
@@ -47,13 +53,20 @@ export function TwoFactorSecurityCard() {
 
 	const [setupOpen, setSetupOpen] = useState(false);
 	const [setup, setSetup] = useState<TwoFactorSetupStart | null>(null);
-	const [setupCode, setSetupCode] = useState("");
 	const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 	const [disableOpen, setDisableOpen] = useState(false);
-	const [disableCode, setDisableCode] = useState("");
 	const [regenerateOpen, setRegenerateOpen] = useState(false);
-	const [regenerateCode, setRegenerateCode] = useState("");
 	const [recoveryOpen, setRecoveryOpen] = useState(false);
+
+	const {
+		register,
+		handleSubmit,
+		reset: resetSetupForm,
+		formState: { errors: setupErrors }
+	} = useForm<TwoFactorCodeFormValues>({
+		resolver: zodResolver(twoFactorCodeFormSchema),
+		defaultValues: { code: "" }
+	});
 
 	const enabled = Boolean(statusQuery.data?.enabled);
 
@@ -61,7 +74,7 @@ export function TwoFactorSecurityCard() {
 		startSetupMutation.mutate(undefined, {
 			onSuccess: result => {
 				setSetup(result);
-				setSetupCode("");
+				resetSetupForm();
 				setRecoveryCodes(null);
 				setSetupOpen(true);
 			},
@@ -69,11 +82,9 @@ export function TwoFactorSecurityCard() {
 		});
 	};
 
-	const handleConfirmSetup = (event: SyntheticEvent<HTMLFormElement>) => {
-		event.preventDefault();
-
+	const handleConfirmSetup = (values: TwoFactorCodeFormValues) => {
 		confirmSetupMutation.mutate(
-			{ code: setupCode },
+			{ code: values.code },
 			{
 				onSuccess: result => {
 					setRecoveryCodes(result.recoveryCodes);
@@ -84,15 +95,12 @@ export function TwoFactorSecurityCard() {
 		);
 	};
 
-	const handleDisable = (event: SyntheticEvent<HTMLFormElement>) => {
-		event.preventDefault();
-
+	const handleDisable = (values: TwoFactorCodeFormValues) => {
 		disableMutation.mutate(
-			{ code: disableCode },
+			{ code: values.code },
 			{
 				onSuccess: () => {
 					toast.success("Two-factor authentication disabled");
-					setDisableCode("");
 					setDisableOpen(false);
 				},
 				onError: error => toast.error(getErrorMessage(error, "Failed to disable 2FA"))
@@ -100,15 +108,12 @@ export function TwoFactorSecurityCard() {
 		);
 	};
 
-	const handleRegenerate = (event: SyntheticEvent<HTMLFormElement>) => {
-		event.preventDefault();
-
+	const handleRegenerate = (values: TwoFactorCodeFormValues) => {
 		regenerateMutation.mutate(
-			{ code: regenerateCode },
+			{ code: values.code },
 			{
 				onSuccess: result => {
 					setRecoveryCodes(result.recoveryCodes);
-					setRegenerateCode("");
 					setRegenerateOpen(false);
 					setRecoveryOpen(true);
 					toast.success("Recovery codes regenerated");
@@ -193,7 +198,7 @@ export function TwoFactorSecurityCard() {
 							}}
 						/>
 					) : (
-						<form onSubmit={handleConfirmSetup} className="grid gap-6">
+						<form onSubmit={handleSubmit(handleConfirmSetup)} className="grid gap-6">
 							<DialogHeader>
 								<DialogTitle>Set up two-factor authentication</DialogTitle>
 								<DialogDescription>
@@ -223,8 +228,7 @@ export function TwoFactorSecurityCard() {
 										<FieldLabel htmlFor="two-factor-setup-code">Authenticator code</FieldLabel>
 										<Input
 											id="two-factor-setup-code"
-											value={setupCode}
-											onChange={event => setSetupCode(event.target.value)}
+											{...register("code")}
 											autoComplete="one-time-code"
 											placeholder="123456"
 											disabled={confirmSetupMutation.isPending}
@@ -238,10 +242,7 @@ export function TwoFactorSecurityCard() {
 										Cancel
 									</Button>
 								</DialogClose>
-								<Button
-									type="submit"
-									disabled={!setupCode.trim() || confirmSetupMutation.isPending}
-								>
+								<Button type="submit" disabled={confirmSetupMutation.isPending}>
 									{confirmSetupMutation.isPending ? "Confirming" : "Enable 2FA"}
 								</Button>
 							</DialogFooter>
@@ -255,8 +256,6 @@ export function TwoFactorSecurityCard() {
 				onOpenChange={setDisableOpen}
 				title="Disable two-factor authentication"
 				description="Enter a current authenticator or recovery code."
-				code={disableCode}
-				onCodeChange={setDisableCode}
 				onSubmit={handleDisable}
 				isPending={disableMutation.isPending}
 				actionLabel="Disable 2FA"
@@ -268,8 +267,6 @@ export function TwoFactorSecurityCard() {
 				onOpenChange={setRegenerateOpen}
 				title="Regenerate recovery codes"
 				description="Your old recovery codes will stop working after this succeeds."
-				code={regenerateCode}
-				onCodeChange={setRegenerateCode}
 				onSubmit={handleRegenerate}
 				isPending={regenerateMutation.isPending}
 				actionLabel="Regenerate codes"
@@ -294,4 +291,3 @@ export function TwoFactorSecurityCard() {
 function getErrorMessage(error: unknown, fallback: string): string {
 	return error instanceof Error ? error.message : fallback;
 }
-

@@ -1,15 +1,18 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading03Icon, Mail01Icon, MailSend01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CredentialResponse, GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
-import { SyntheticEvent, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { FaGoogle } from "react-icons/fa";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-
+import { magicLinkRequestSchema, type MagicLinkRequestSchema } from "@/features/auth/login/schemas/login-schema";
 import { googleLogin, requestMagicLink } from "@/features/auth/login/actions/login";
 import useRedirect from "@/hooks/use-redirect";
 import { route } from "@/routes/routes";
@@ -30,21 +33,28 @@ function resolveSafeRedirectUrl(redirectUrl: string | null): string {
 
 export function LoginForm() {
 	const { redirectUrl } = useRedirect();
-	const [email, setEmail] = useState("");
 	const [isRequestingMagicLink, setIsRequestingMagicLink] = useState(false);
 	const [magicLinkMessage, setMagicLinkMessage] = useState<string | null>(null);
 	const [magicLinkErrorMessage, setMagicLinkErrorMessage] = useState<string | null>(null);
 	const [isLoggingInWithGoogle, setIsLoggingInWithGoogle] = useState(false);
 	const [googleErrorMessage, setGoogleErrorMessage] = useState<string | null>(null);
 
-	const handleMagicLinkSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
-		event.preventDefault();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors }
+	} = useForm<MagicLinkRequestSchema>({
+		resolver: zodResolver(magicLinkRequestSchema),
+		defaultValues: { email: "" }
+	});
+
+	const handleMagicLinkSubmit = async (values: MagicLinkRequestSchema) => {
 		setIsRequestingMagicLink(true);
 		setMagicLinkMessage(null);
 		setMagicLinkErrorMessage(null);
 
 		try {
-			const result = await requestMagicLink(email, redirectUrl);
+			const result = await requestMagicLink(values.email, redirectUrl);
 			if (!result.success) throw new Error(result.message || "Could not send the magic link.");
 			setMagicLinkMessage("Check your email for a sign-in link.");
 		} catch (error) {
@@ -93,30 +103,28 @@ export function LoginForm() {
 
 	return (
 		<>
-			<form className="space-y-4" onSubmit={handleMagicLinkSubmit} noValidate>
-				<div className="space-y-2">
-					<label htmlFor="magic-link-email" className="text-foreground text-sm font-medium">
-						Email address
-					</label>
-					<div className="relative">
-						<HugeiconsIcon
-							icon={Mail01Icon}
-							className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
-						/>
-						<Input
-							id="magic-link-email"
-							type="email"
-							name="email"
-							value={email}
-							onChange={event => setEmail(event.target.value)}
-							placeholder="you@example.com"
-							autoComplete="email"
-							className="h-12 rounded-xl pl-10"
-							disabled={isRequestingMagicLink}
-							aria-invalid={Boolean(magicLinkErrorMessage)}
-						/>
-					</div>
-				</div>
+			<form className="space-y-4" onSubmit={handleSubmit(handleMagicLinkSubmit)} noValidate>
+				<Field>
+					<FieldLabel htmlFor="magic-link-email">Email address</FieldLabel>
+					<FieldContent>
+						<div className="relative">
+							<HugeiconsIcon
+								icon={Mail01Icon}
+								className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+							/>
+							<Input
+								id="magic-link-email"
+								type="email"
+								{...register("email")}
+								placeholder="you@example.com"
+								autoComplete="email"
+								className="h-12 rounded-xl pl-10"
+								disabled={isRequestingMagicLink}
+							/>
+						</div>
+						<FieldError>{errors.email?.message}</FieldError>
+					</FieldContent>
+				</Field>
 
 				<Button
 					type="submit"
