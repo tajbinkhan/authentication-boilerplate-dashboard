@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 import { forwardCookies, serverApi } from "@/lib/server-api";
 
-import { magicLinkRequestSchema } from "@/features/auth/login/validation/login-schema";
+import { magicLinkRequestSchema } from "@/features/auth/login/schemas/login-schema";
 import { apiRoute, route } from "@/routes/routes";
 
 const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
@@ -54,9 +54,7 @@ async function saveMagicLinkRedirect(redirectUrl: string | null) {
 	});
 }
 
-async function consumeMagicLinkRedirectWithPreferred(
-	redirectUrl: string | null
-): Promise<string> {
+async function consumeMagicLinkRedirectWithPreferred(redirectUrl: string | null): Promise<string> {
 	const cookieStore = await cookies();
 	const savedRedirect = cookieStore.get(MAGIC_LINK_REDIRECT_COOKIE)?.value ?? null;
 	const safePreferredRedirectUrl = resolveSafeRedirectUrl(redirectUrl);
@@ -158,3 +156,4 @@ export async function verifyMagicLink(
 		};
 	}
 }
+

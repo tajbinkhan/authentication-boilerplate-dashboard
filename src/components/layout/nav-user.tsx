@@ -3,7 +3,12 @@
 import { Logout03Icon, MoreVerticalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { toast } from "sonner";
 
+import axiosClientApi from "@/lib/client-api";
+
+import { NavUserItemProps, NavUserMaxItemProps } from "@/components/layout/layout.types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -21,13 +26,9 @@ import {
 	useSidebar
 } from "@/components/ui/sidebar";
 
-import { NavUserItemProps, NavUserMaxItemProps } from "@/components/layout/layout.types";
 import { getUserInitials } from "@/core/helper";
 import useAuth from "@/hooks/use-auth";
-import axiosClientApi from "@/lib/client-api";
 import { apiRoute, route } from "@/routes/routes";
-import { usePathname } from "next/navigation";
-import { toast } from "sonner";
 
 interface NavUserComponentProps {
 	items: NavUserMaxItemProps;
@@ -73,12 +74,12 @@ export function NavUser(props: NavUserComponentProps) {
 							<Avatar className="h-8 w-8 rounded-lg bg-transparent">
 								<AvatarImage src={userImage} alt={userName} />
 								<AvatarFallback className="text-foreground rounded-lg bg-transparent">
-									{getUserInitials(user.name)}
+									{getUserInitials(userName)}
 								</AvatarFallback>
 							</Avatar>
 
 							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-medium">{user.name}</span>
+								<span className="truncate font-medium">{userName}</span>
 								<span className="text-muted-foreground truncate text-xs">{user.email}</span>
 							</div>
 
@@ -97,12 +98,12 @@ export function NavUser(props: NavUserComponentProps) {
 								<Avatar className="text-foreground h-8 w-8 rounded-lg bg-transparent">
 									<AvatarImage src={userImage} alt={userName} />
 									<AvatarFallback className="text-foreground rounded-lg bg-transparent">
-										{getUserInitials(user.name)}
+										{getUserInitials(userName)}
 									</AvatarFallback>
 								</Avatar>
 
 								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="text-foreground truncate font-medium">{user.name}</span>
+									<span className="text-foreground truncate font-medium">{userName}</span>
 									<span className="text-muted-foreground truncate text-xs">{user.email}</span>
 								</div>
 							</div>

@@ -28,6 +28,8 @@ export const apiRoute = {
 	twoFactorDisable: "/auth/2fa/disable",
 	twoFactorRecoveryCodesRegenerate: "/auth/2fa/recovery-codes/regenerate",
 	me: "/auth/me",
+	profile: "/auth/profile",
+	profileImage: "/auth/profile/image",
 	logout: "/auth/logout",
 	users: "/users",
 	user: (id: string) => `/users/${id}`,

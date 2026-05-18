@@ -10,6 +10,7 @@ interface AuthContextType {
 	user: User | null;
 	isAuthenticated: boolean;
 	isLoading: boolean;
+	setUser: (user: User | null) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,7 +23,7 @@ interface AuthProviderProps {
 export default function AuthProvider({ children, user }: Readonly<AuthProviderProps>) {
 	const pathname = usePathname();
 	const [updatedUser, setUpdatedUser] = useState<User | null>(user);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(!user);
 
 	useEffect(() => {
 		const isPrivateRoute =
@@ -45,7 +46,12 @@ export default function AuthProvider({ children, user }: Readonly<AuthProviderPr
 
 	return (
 		<AuthContext.Provider
-			value={{ user: updatedUser, isAuthenticated: Boolean(updatedUser), isLoading }}
+			value={{
+				user: updatedUser,
+				isAuthenticated: Boolean(updatedUser),
+				isLoading,
+				setUser: setUpdatedUser
+			}}
 		>
 			{children}
 		</AuthContext.Provider>
