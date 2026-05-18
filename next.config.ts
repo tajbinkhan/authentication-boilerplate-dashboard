@@ -6,7 +6,9 @@ const nextConfig: NextConfig = {
 		browserToTerminal: false,
 		serverFunctions: false
 	},
-	devIndicators: false
+	devIndicators: false,
+	allowedDevOrigins: ["*.trycloudflare.com"]
 };
 
 export default nextConfig;
+
