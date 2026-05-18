@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+
 import { useSessionList } from "@/features/sessions/context/session-list-context";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
@@ -93,7 +94,7 @@ export function SessionsDataTableToolbar<TData>({
 		<div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
 			<div className="flex flex-col gap-3 lg:flex-row lg:items-end">
 				<Field className="gap-1 sm:max-w-72">
-					<InputGroup className="max-w-xs">
+					<InputGroup className="h-8 max-w-xs">
 						<InputGroupInput
 							id="sessions-search"
 							value={searchInput}
