@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { wrapper } from "axios-cookiejar-support";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { parse } from "set-cookie-parser";
 import { CookieJar } from "tough-cookie";
 
@@ -8,6 +8,14 @@ import { apiRoute } from "@/routes/routes";
 
 const CSRF_COOKIE_NAME = "csrf-token";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const FORWARDED_REQUEST_HEADERS = [
+	"user-agent",
+	"x-forwarded-for",
+	"x-real-ip",
+	"sec-ch-ua",
+	"sec-ch-ua-mobile",
+	"sec-ch-ua-platform"
+] as const;
 
 export function createServerClient() {
 	// Scoped per-call: cookies set by CSRF response are automatically
@@ -50,6 +58,7 @@ export async function serverApi<T = unknown>(
 ): Promise<{ data: T; headers: Record<string, any> }> {
 	const client = createServerClient();
 	const isMutating = config.method?.toLowerCase() !== "get";
+	const forwardedHeaders = await getForwardedRequestHeaders();
 
 	// Seed the jar with existing browser cookies so the API
 	// server sees the user's session on every call
@@ -72,6 +81,7 @@ export async function serverApi<T = unknown>(
 		const response = await client({
 			...config,
 			headers: {
+				...forwardedHeaders,
 				...config.headers,
 				...(isMutating && token ? { "X-CSRF-Token": token } : {})
 			}
@@ -95,4 +105,20 @@ export async function serverApi<T = unknown>(
 		}
 		throw error;
 	}
+}
+
+async function getForwardedRequestHeaders(): Promise<Record<string, string>> {
+	const requestHeaders = await headers();
+	const forwardedHeaders: Record<string, string> = {};
+
+	for (const header of FORWARDED_REQUEST_HEADERS) {
+		const value = requestHeaders.get(header);
+		if (value) forwardedHeaders[header] = value;
+	}
+
+	if (forwardedHeaders["user-agent"]) {
+		forwardedHeaders["x-client-user-agent"] = forwardedHeaders["user-agent"];
+	}
+
+	return forwardedHeaders;
 }
