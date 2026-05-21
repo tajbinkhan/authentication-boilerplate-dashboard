@@ -26,6 +26,7 @@ interface UserListContextValue {
 	search: string;
 	role: string;
 	emailVerified: string;
+	isApproved: string;
 	fromDate: string;
 	toDate: string;
 	sort: UserSort;
@@ -34,6 +35,7 @@ interface UserListContextValue {
 	handleOptionFilter: (key: string, value?: string | string[] | null) => void;
 	handleSearchChange: (value: string) => void;
 	handleEmailVerifiedChange: (value: string) => void;
+	handleIsApprovedChange: (value: string) => void;
 	handleDateRangeChange: (value: { fromDate?: string; toDate?: string }) => void;
 	handleResetAll: () => void;
 	handleRefresh: () => void;
@@ -60,6 +62,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 			search: params.search || undefined,
 			role: params.role || undefined,
 			emailVerified: params.emailVerified || undefined,
+			isApproved: params.isApproved || undefined,
 			fromDate: params.fromDate || undefined,
 			toDate: params.toDate || undefined,
 			sort: params.sort,
@@ -68,6 +71,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 		[
 			params.dir,
 			params.emailVerified,
+			params.isApproved,
 			params.fromDate,
 			params.page,
 			params.pageSize,
@@ -122,6 +126,13 @@ export function UserListProvider({ children }: UserListProviderProps) {
 		[setParams]
 	);
 
+	const handleIsApprovedChange = useCallback(
+		(value: string) => {
+			void setParams({ isApproved: value || null, page: 1 });
+		},
+		[setParams]
+	);
+
 	const handleDateRangeChange = useCallback(
 		(value: { fromDate?: string; toDate?: string }) => {
 			void setParams({
@@ -140,6 +151,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 			search: null,
 			role: null,
 			emailVerified: null,
+			isApproved: null,
 			fromDate: null,
 			toDate: null,
 			sort: "createdAt",
@@ -170,6 +182,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 			search: params.search,
 			role: params.role,
 			emailVerified: params.emailVerified,
+			isApproved: params.isApproved,
 			fromDate: params.fromDate,
 			toDate: params.toDate,
 			sort: params.sort,
@@ -178,6 +191,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 			handleOptionFilter,
 			handleSearchChange,
 			handleEmailVerifiedChange,
+			handleIsApprovedChange,
 			handleDateRangeChange,
 			handleResetAll,
 			handleRefresh
@@ -185,6 +199,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 		[
 			handleDateRangeChange,
 			handleEmailVerifiedChange,
+			handleIsApprovedChange,
 			handleOptionFilter,
 			handleRefresh,
 			handleResetAll,
@@ -196,6 +211,7 @@ export function UserListProvider({ children }: UserListProviderProps) {
 			pagination.total,
 			params.dir,
 			params.emailVerified,
+			params.isApproved,
 			params.fromDate,
 			params.role,
 			params.search,

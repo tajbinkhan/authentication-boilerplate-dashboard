@@ -6,6 +6,7 @@ import {
 	userSortValues,
 	type UserListQuery
 } from "@/features/users/types/users.types";
+import { validateEnum } from "@/validators/common-rule";
 
 function firstSearchParamValue(value: unknown): unknown {
 	return Array.isArray(value) ? value[0] : value;
@@ -47,6 +48,11 @@ const emailVerifiedQuerySchema = optionalTrimmedStringSchema.refine(
 	{ message: "Email verified filter is invalid" }
 );
 
+const isApprovedQuerySchema = optionalTrimmedStringSchema.refine(
+	value => !value || value === "true" || value === "false",
+	{ message: "Approved filter is invalid" }
+);
+
 const pageQuerySchema = z
 	.preprocess(firstSearchParamValue, z.coerce.number().int().min(1))
 	.optional()
@@ -60,13 +66,13 @@ const pageSizeQuerySchema = z
 	.default(10);
 
 const sortQuerySchema = z
-	.preprocess(firstSearchParamValue, z.enum(userSortValues))
+	.preprocess(firstSearchParamValue, validateEnum("Sort", userSortValues))
 	.optional()
 	.catch("createdAt")
 	.default("createdAt");
 
 const directionQuerySchema = z
-	.preprocess(firstSearchParamValue, z.enum(userSortDirectionValues))
+	.preprocess(firstSearchParamValue, validateEnum("Direction", userSortDirectionValues))
 	.optional()
 	.catch("desc")
 	.default("desc");
@@ -78,6 +84,7 @@ export const userListQuerySchema = z
 		search: optionalTrimmedStringSchema,
 		role: roleQuerySchema,
 		emailVerified: emailVerifiedQuerySchema,
+		isApproved: isApprovedQuerySchema,
 		fromDate: dateQuerySchema,
 		toDate: dateQuerySchema,
 		sort: sortQuerySchema,
@@ -96,6 +103,7 @@ export function createUserListQuery(input: unknown): UserListQuery {
 		search: query.search,
 		role: query.role,
 		emailVerified: query.emailVerified,
+		isApproved: query.isApproved,
 		fromDate: query.fromDate,
 		toDate: query.toDate,
 		sort: query.sort,

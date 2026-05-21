@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loading03Icon, Mail01Icon, MailSend01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { AlertCircleIcon, Loading03Icon, Mail01Icon, MailSend01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CredentialResponse, GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaGoogle } from "react-icons/fa";
 
@@ -14,6 +14,8 @@ import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/fie
 import { Input } from "@/components/ui/input";
 import { magicLinkRequestSchema, type MagicLinkRequestSchema } from "@/features/auth/login/schemas/login-schema";
 import { googleLogin, requestMagicLink } from "@/features/auth/login/actions/login";
+import { getPublicSettings } from "@/features/system/actions/system.actions";
+import type { PublicSystemSettings } from "@/features/system/types/system.types";
 import useRedirect from "@/hooks/use-redirect";
 import { route } from "@/routes/routes";
 
@@ -38,6 +40,17 @@ export function LoginForm() {
 	const [magicLinkErrorMessage, setMagicLinkErrorMessage] = useState<string | null>(null);
 	const [isLoggingInWithGoogle, setIsLoggingInWithGoogle] = useState(false);
 	const [googleErrorMessage, setGoogleErrorMessage] = useState<string | null>(null);
+	const [publicSettings, setPublicSettings] = useState<PublicSystemSettings | null>(null);
+
+	useEffect(() => {
+		getPublicSettings()
+			.then(settings => {
+				setPublicSettings(settings);
+			})
+			.catch(err => {
+				console.error("Failed to load public system settings", err);
+			});
+	}, []);
 
 	const {
 		register,
@@ -103,6 +116,16 @@ export function LoginForm() {
 
 	return (
 		<>
+			{publicSettings?.accessModel === "CLOSED" && (
+				<Alert className="border-amber-500/20 bg-amber-500/5 text-amber-600 dark:border-amber-500/30 dark:text-amber-400 rounded-xl mb-4">
+					<HugeiconsIcon icon={AlertCircleIcon} className="size-4 text-amber-600 dark:text-amber-400" />
+					<AlertTitle className="font-semibold text-sm">Private System</AlertTitle>
+					<AlertDescription className="text-xs">
+						Self-registration is closed. Only pre-authorized accounts can request magic links or sign in via Google.
+					</AlertDescription>
+				</Alert>
+			)}
+
 			<form className="space-y-4" onSubmit={handleSubmit(handleMagicLinkSubmit)} noValidate>
 				<Field>
 					<FieldLabel htmlFor="magic-link-email">Email address</FieldLabel>

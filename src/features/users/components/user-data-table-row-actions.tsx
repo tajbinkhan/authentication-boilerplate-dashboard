@@ -6,6 +6,7 @@ import {
 	LockKeyIcon,
 	MoreVerticalIcon,
 	ShieldBanIcon,
+	Tick02Icon,
 	UserEdit01Icon
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -54,16 +55,16 @@ import {
 } from "@/components/ui/select";
 import {
 	useDeleteUserMutation,
-	useRevokeUserSessionsMutation,
 	useResetUserTwoFactorMutation,
+	useRevokeUserSessionsMutation,
 	useUpdateUserMutation,
 	useUpdateUserRoleMutation
 } from "@/features/users/actions/users.mutations";
+import { UserFormFields } from "@/features/users/components/user-form-fields";
 import {
-	type UserFormValues,
-	UserFormFields
-} from "@/features/users/components/user-form-fields";
-import { editUserFormSchema } from "@/features/users/schemas/user-form.schema";
+	CreateUserFormValues,
+	editUserFormSchema
+} from "@/features/users/schemas/user-form.schema";
 import type { ManagedUser, UserRole } from "@/features/users/types/users.types";
 import {
 	canManageUser,
@@ -98,19 +99,20 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 	const assignableRoles = useMemo(() => getAssignableRoles(currentUser), [currentUser]);
 	const canSubmitRole = manageable && nextRole !== user.role && !updateUserRoleMutation.isPending;
 
-	const editForm = useForm<UserFormValues>({
+	const editForm = useForm<CreateUserFormValues>({
 		resolver: zodResolver(editUserFormSchema),
 		defaultValues: createEditValues(user)
 	});
 
-	const handleUpdateUser = (values: UserFormValues) => {
+	const handleUpdateUser = (values: CreateUserFormValues) => {
 		updateUserMutation.mutate(
 			{
 				id: user.id,
 				name: emptyToNull(values.name),
 				email: values.email.trim().toLowerCase(),
 				phone: emptyToNull(values.phone),
-				emailVerified: values.emailVerified
+				emailVerified: values.emailVerified,
+				isApproved: values.isApproved
 			},
 			{
 				onSuccess: () => {
@@ -119,6 +121,27 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 				},
 				onError: error => {
 					handleRequestError(error, router, "Failed to update user");
+				}
+			}
+		);
+	};
+
+	const handleToggleApproval = (approved: boolean) => {
+		updateUserMutation.mutate(
+			{
+				id: user.id,
+				isApproved: approved
+			},
+			{
+				onSuccess: () => {
+					toast.success(approved ? "User approved" : "User approval revoked");
+				},
+				onError: error => {
+					handleRequestError(
+						error,
+						router,
+						approved ? "Failed to approve user" : "Failed to revoke approval"
+					);
 				}
 			}
 		);
@@ -190,7 +213,12 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button type="button" variant="ghost" size="icon" aria-label={`Open actions for ${user.email}`}>
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						aria-label={`Open actions for ${user.email}`}
+					>
 						<HugeiconsIcon icon={MoreVerticalIcon} />
 					</Button>
 				</DropdownMenuTrigger>
@@ -217,6 +245,28 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 						<HugeiconsIcon icon={UserEdit01Icon} />
 						Change role
 					</DropdownMenuItem>
+					{manageable && !user.isApproved && (
+						<DropdownMenuItem
+							onSelect={event => {
+								event.preventDefault();
+								handleToggleApproval(true);
+							}}
+						>
+							<HugeiconsIcon icon={Tick02Icon} />
+							Approve user
+						</DropdownMenuItem>
+					)}
+					{manageable && user.isApproved && (
+						<DropdownMenuItem
+							onSelect={event => {
+								event.preventDefault();
+								handleToggleApproval(false);
+							}}
+						>
+							<HugeiconsIcon icon={ShieldBanIcon} />
+							Revoke approval
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant="destructive"
@@ -257,10 +307,7 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 			<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
 				<DialogContent className="sm:max-w-2xl">
 					<FormProvider {...editForm}>
-						<form
-							onSubmit={editForm.handleSubmit(handleUpdateUser)}
-							className="grid gap-6"
-						>
+						<form onSubmit={editForm.handleSubmit(handleUpdateUser)} className="grid gap-6">
 							<DialogHeader>
 								<DialogTitle>Edit user</DialogTitle>
 								<DialogDescription>{user.email}</DialogDescription>
@@ -311,11 +358,7 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 								Cancel
 							</Button>
 						</DialogClose>
-						<Button
-							type="button"
-							onClick={handleUpdateRole}
-							disabled={!canSubmitRole}
-						>
+						<Button type="button" onClick={handleUpdateRole} disabled={!canSubmitRole}>
 							{updateUserRoleMutation.isPending ? "Saving" : "Save role"}
 						</Button>
 					</DialogFooter>
@@ -399,14 +442,15 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 	);
 }
 
-function createEditValues(user: ManagedUser): UserFormValues {
+function createEditValues(user: ManagedUser): CreateUserFormValues {
 	return {
 		name: user.name ?? "",
 		email: user.email,
 		password: "",
 		phone: user.phone ?? "",
 		role: user.role,
-		emailVerified: user.emailVerified
+		emailVerified: user.emailVerified,
+		isApproved: user.isApproved
 	};
 }
 

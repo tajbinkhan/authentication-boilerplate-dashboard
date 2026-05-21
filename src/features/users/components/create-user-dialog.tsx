@@ -19,15 +19,12 @@ import {
 	DialogTitle
 } from "@/components/ui/dialog";
 import { useCreateUserMutation } from "@/features/users/actions/users.mutations";
+import { UserFormFields } from "@/features/users/components/user-form-fields";
 import {
-	type UserFormValues,
-	UserFormFields
-} from "@/features/users/components/user-form-fields";
-import { createUserFormSchema } from "@/features/users/schemas/user-form.schema";
-import {
-	getAssignableRoles,
-	getDefaultAssignableRole
-} from "@/features/users/utils/user-format";
+	createUserFormSchema,
+	CreateUserFormValues
+} from "@/features/users/schemas/user-form.schema";
+import { getAssignableRoles, getDefaultAssignableRole } from "@/features/users/utils/user-format";
 import useAuth from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api/errors";
 import { route } from "@/routes/routes";
@@ -39,7 +36,7 @@ export function CreateUserDialog() {
 	const assignableRoles = useMemo(() => getAssignableRoles(currentUser), [currentUser]);
 	const [open, setOpen] = useState(false);
 
-	const form = useForm<UserFormValues>({
+	const form = useForm<CreateUserFormValues>({
 		resolver: zodResolver(createUserFormSchema),
 		defaultValues: createInitialValues(currentUser)
 	});
@@ -53,7 +50,7 @@ export function CreateUserDialog() {
 	};
 
 	const onSubmit = useCallback(
-		(values: UserFormValues) => {
+		(values: CreateUserFormValues) => {
 			createUserMutation.mutate(
 				{
 					name: emptyToNull(values.name),
@@ -61,7 +58,8 @@ export function CreateUserDialog() {
 					password: emptyToNull(values.password),
 					phone: emptyToNull(values.phone),
 					emailVerified: values.emailVerified,
-					role: values.role
+					role: values.role,
+					isApproved: values.isApproved
 				},
 				{
 					onSuccess: () => {
@@ -79,7 +77,11 @@ export function CreateUserDialog() {
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<Button type="button" onClick={() => handleOpenChange(true)} disabled={assignableRoles.length === 0}>
+			<Button
+				type="button"
+				onClick={() => handleOpenChange(true)}
+				disabled={assignableRoles.length === 0}
+			>
 				<HugeiconsIcon icon={PlusSignCircleIcon} data-icon="inline-start" />
 				Create user
 			</Button>
@@ -88,7 +90,9 @@ export function CreateUserDialog() {
 					<form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
 						<DialogHeader>
 							<DialogTitle>Create user</DialogTitle>
-							<DialogDescription>Add a managed account with the allowed role hierarchy.</DialogDescription>
+							<DialogDescription>
+								Add a managed account with the allowed role hierarchy.
+							</DialogDescription>
 						</DialogHeader>
 						<UserFormFields
 							idPrefix="create-user"
@@ -114,14 +118,15 @@ export function CreateUserDialog() {
 	);
 }
 
-function createInitialValues(currentUser: User | null | undefined): UserFormValues {
+function createInitialValues(currentUser: User | null | undefined): CreateUserFormValues {
 	return {
 		name: "",
 		email: "",
 		password: "",
 		phone: "",
 		role: getDefaultAssignableRole(currentUser),
-		emailVerified: false
+		emailVerified: false,
+		isApproved: true
 	};
 }
 

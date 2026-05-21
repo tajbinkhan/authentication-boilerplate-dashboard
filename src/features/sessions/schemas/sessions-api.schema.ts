@@ -6,6 +6,7 @@ import {
 	sessionStatusValues,
 	type SessionListQuery
 } from "@/features/sessions/types/sessions.types";
+import { validateEnum } from "@/validators/common-rule";
 
 function firstSearchParamValue(value: unknown): unknown {
 	return Array.isArray(value) ? value[0] : value;
@@ -57,13 +58,13 @@ const pageSizeQuerySchema = z
 	.default(10);
 
 const sortQuerySchema = z
-	.preprocess(firstSearchParamValue, z.enum(sessionSortValues))
+	.preprocess(firstSearchParamValue, validateEnum("Sort", sessionSortValues))
 	.optional()
 	.catch("createdAt")
 	.default("createdAt");
 
 const directionQuerySchema = z
-	.preprocess(firstSearchParamValue, z.enum(sessionSortDirectionValues))
+	.preprocess(firstSearchParamValue, validateEnum("Direction", sessionSortDirectionValues))
 	.optional()
 	.catch("desc")
 	.default("desc");

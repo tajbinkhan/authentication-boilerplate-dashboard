@@ -34,11 +34,13 @@ export function UsersDataTableToolbar<TData>({ table }: UsersDataTableToolbarPro
 		search,
 		role,
 		emailVerified,
+		isApproved,
 		fromDate,
 		toDate,
 		isFetching,
 		handleSearchChange,
 		handleEmailVerifiedChange,
+		handleIsApprovedChange,
 		handleDateRangeChange,
 		handleOptionFilter,
 		handleResetAll,
@@ -47,7 +49,7 @@ export function UsersDataTableToolbar<TData>({ table }: UsersDataTableToolbarPro
 	const [searchInput, setSearchInput] = useState(search);
 	const debouncedSearch = useDebouncedValue(searchInput, 400);
 
-	const hasFilters = Boolean(search || role || emailVerified || fromDate || toDate);
+	const hasFilters = Boolean(search || role || emailVerified || isApproved || fromDate || toDate);
 
 	useEffect(() => {
 		if (debouncedSearch === search) return;
@@ -100,6 +102,15 @@ export function UsersDataTableToolbar<TData>({ table }: UsersDataTableToolbarPro
 						options={[
 							{ label: "Verified", value: "true" },
 							{ label: "Unverified", value: "false" }
+						]}
+						onValueChange={() => handleOptionFilter("page", "1")}
+					/>
+					<DataTableSingleSelectFacetedFilter
+						title="Status"
+						queryParameter="isApproved"
+						options={[
+							{ label: "Approved", value: "true" },
+							{ label: "Pending", value: "false" }
 						]}
 						onValueChange={() => handleOptionFilter("page", "1")}
 					/>

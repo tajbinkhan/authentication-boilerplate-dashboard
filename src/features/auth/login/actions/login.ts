@@ -6,6 +6,7 @@ import { forwardCookies, serverApi } from "@/lib/server-api";
 
 import { magicLinkRequestSchema } from "@/features/auth/login/schemas/login-schema";
 import { apiRoute, route } from "@/routes/routes";
+import { normalizeApiError } from "@/lib/api/errors";
 
 const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
 const MAGIC_LINK_REDIRECT_MAX_AGE_SECONDS = 10 * 60;
@@ -81,7 +82,7 @@ export async function googleLogin(
 	} catch (error) {
 		return {
 			success: false,
-			message: error instanceof Error ? error.message : "Google sign-in failed."
+			message: normalizeApiError(error).message
 		};
 	}
 }
@@ -119,7 +120,7 @@ export async function requestMagicLink(
 	} catch (error) {
 		return {
 			success: false,
-			message: error instanceof Error ? error.message : "Could not send the magic link."
+			message: normalizeApiError(error).message
 		};
 	}
 }
@@ -151,7 +152,7 @@ export async function verifyMagicLink(
 	} catch (error) {
 		return {
 			success: false,
-			message: error instanceof Error ? error.message : "Magic link verification failed.",
+			message: normalizeApiError(error).message,
 			redirectUrl: route.private.dashboard
 		};
 	}

@@ -7,6 +7,7 @@ interface User {
 	phone: string | null;
 	is2faEnabled: boolean;
 	role: "ADMIN" | "MANAGER" | "USER" | "SUPER_ADMIN";
+	isApproved: boolean;
 	createdAt: string;
 	updatedAt: string;
 }

@@ -6,6 +6,7 @@ export const userSortValues = [
 	"emailVerified",
 	"is2faEnabled",
 	"role",
+	"isApproved",
 	"activeSessionCount",
 	"createdAt",
 	"updatedAt"
@@ -22,6 +23,7 @@ export interface ManagedUser {
 	is2faEnabled: boolean;
 	role: UserRole;
 	activeSessionCount: number;
+	isApproved: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -36,6 +38,7 @@ export interface UserListQuery {
 	search?: string;
 	role?: string;
 	emailVerified?: string;
+	isApproved?: string;
 	fromDate?: string;
 	toDate?: string;
 	sort: UserSort;
@@ -49,6 +52,7 @@ export interface CreateUserInput {
 	phone?: string | null;
 	emailVerified?: boolean;
 	role: UserRole;
+	isApproved?: boolean;
 }
 
 export interface UpdateUserInput {
@@ -57,6 +61,7 @@ export interface UpdateUserInput {
 	email?: string;
 	phone?: string | null;
 	emailVerified?: boolean;
+	isApproved?: boolean;
 }
 
 export interface UpdateUserRoleInput {

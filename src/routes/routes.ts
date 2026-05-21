@@ -7,7 +7,8 @@ export const route = {
 		dashboard: "/",
 		profile: "/profile",
 		users: "/users",
-		sessions: "/sessions"
+		sessions: "/sessions",
+		system: "/system"
 	},
 	protected: {
 		login: "/login",
@@ -38,7 +39,9 @@ export const apiRoute = {
 	userTwoFactorReset: (id: string) => `/users/${id}/2fa/reset`,
 	sessions: "/auth/sessions",
 	sessionRevoke: (id: string) => `/auth/sessions/${id}/revoke`,
-	revokeOtherSessions: "/auth/sessions/revoke-others"
+	revokeOtherSessions: "/auth/sessions/revoke-others",
+	systemSettingsPublic: "/system/settings/public",
+	systemSettings: "/system/settings"
 } as const;
 
 const DEFAULT_LOGIN_REDIRECT = route.private.dashboard;

@@ -12,6 +12,8 @@ import { ApiError } from "@/lib/api/errors";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
+import { UserGroupIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { UsersTable } from "./users-table";
 
 const breadcrumbItems = [
@@ -43,7 +45,10 @@ function UsersPageContent() {
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div>
-						<h1 className="text-2xl font-semibold tracking-normal">Users</h1>
+						<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-normal">
+							<HugeiconsIcon icon={UserGroupIcon} className="text-primary size-6" />
+							Users
+						</h1>
 						<p className="text-muted-foreground text-sm">
 							Review accounts, roles, verification, and active sessions.
 						</p>
@@ -78,3 +83,4 @@ function handleRequestError(
 
 	toast.error(error instanceof ApiError ? error.message : fallback);
 }
+

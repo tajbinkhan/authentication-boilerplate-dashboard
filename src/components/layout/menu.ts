@@ -1,6 +1,7 @@
 import {
 	ComputerProtectionIcon,
 	DashboardSquare01Icon,
+	Settings02Icon,
 	UserGroupIcon,
 	UserIcon
 } from "@hugeicons/core-free-icons";
@@ -32,6 +33,12 @@ const navItem: NavItemProps[] = [
 		title: "Users",
 		url: route.private.users,
 		icon: UserGroupIcon,
+		roles: ["ADMIN", "SUPER_ADMIN"]
+	},
+	{
+		title: "System Settings",
+		url: route.private.system,
+		icon: Settings02Icon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
 	}
 ];

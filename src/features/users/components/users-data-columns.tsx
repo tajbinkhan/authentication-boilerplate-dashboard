@@ -50,6 +50,29 @@ export function createUserColumns({
 			cell: ({ row }) => <UserRoleBadge role={row.original.role} />
 		},
 		{
+			accessorKey: "isApproved",
+			header: ({ column }) => (
+				<DataTableColumnHeader
+					column={column}
+					title="Status"
+					sort={sort}
+					dir={dir}
+					handleSorting={handleSorting}
+				/>
+			),
+			cell: ({ row }) => (
+				row.original.isApproved ? (
+					<Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400">
+						Approved
+					</Badge>
+				) : (
+					<Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400">
+						Pending
+					</Badge>
+				)
+			)
+		},
+		{
 			accessorKey: "emailVerified",
 			header: ({ column }) => (
 				<DataTableColumnHeader

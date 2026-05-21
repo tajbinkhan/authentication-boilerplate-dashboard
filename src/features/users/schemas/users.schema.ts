@@ -8,6 +8,7 @@ export const userSearchParams = {
 	search: parseAsString.withDefault(""),
 	role: parseAsString.withDefault(""),
 	emailVerified: parseAsString.withDefault(""),
+	isApproved: parseAsString.withDefault(""),
 	fromDate: parseAsString.withDefault(""),
 	toDate: parseAsString.withDefault(""),
 	sort: parseAsStringEnum([...userSortValues]).withDefault("createdAt"),

@@ -14,7 +14,8 @@ const baseUserFormSchema = z.object({
 	email: validateEmail,
 	phone: validateOptionalPhoneNumber("Phone"),
 	role: validateEnum("Role", userRoleValues),
-	emailVerified: validateBoolean("Email Verified")
+	emailVerified: validateBoolean("Email Verified"),
+	isApproved: validateBoolean("Approved").optional()
 });
 
 export const createUserFormSchema = baseUserFormSchema.extend({
