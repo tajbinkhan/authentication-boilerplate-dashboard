@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponseHeaders, RawAxiosResponseHeaders } from "axios";
 import { wrapper } from "axios-cookiejar-support";
 import { cookies, headers } from "next/headers";
 import { parse } from "set-cookie-parser";
@@ -55,7 +55,7 @@ export async function forwardCookies(setCookieHeader: string | string[] | undefi
 
 export async function serverApi<T = unknown>(
 	config: AxiosRequestConfig
-): Promise<{ data: T; headers: Record<string, any> }> {
+): Promise<{ data: T; headers: RawAxiosResponseHeaders | AxiosResponseHeaders }> {
 	const client = createServerClient();
 	const isMutating = config.method?.toLowerCase() !== "get";
 	const forwardedHeaders = await getForwardedRequestHeaders();
