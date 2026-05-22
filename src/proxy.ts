@@ -6,15 +6,23 @@ import { DEFAULT_LOGIN_REDIRECT, apiRoute, route } from "@/routes/routes";
 
 const AUTH_USER_HEADER = "x-auth-user";
 const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
+const ACCESS_TOKEN_COOKIE = "access-token";
 
 const PUBLIC_ROUTES = Object.values(route.public) as string[];
 const PRIVATE_ROUTES = Object.values(route.private) as string[];
 const PROTECTED_ROUTES = Object.values(route.protected) as string[];
 
+const dashboardAccessRestrictionReasons = new Set([
+	"account_pending_approval",
+	"dashboard_role_not_allowed"
+]);
+
+type DashboardAccessRestriction = { reason: string; message: string };
+
 type AuthState =
 	| { status: "authenticated"; user: User }
 	| { status: "requires_2fa" }
-	| { status: "unauthenticated" };
+	| { status: "unauthenticated"; restriction?: DashboardAccessRestriction };
 
 function isRouteMatch(pathname: string, routePath: string): boolean {
 	if (routePath === route.private.dashboard) {
@@ -65,6 +73,19 @@ function createNextResponseWithUser(request: NextRequest, user: User) {
 	});
 }
 
+function getDashboardAccessRestriction(
+	payload: ApiErrorPayload | null
+): DashboardAccessRestriction | null {
+	if (!payload) return null;
+
+	const reason = payload.meta?.reason;
+
+	if (typeof reason !== "string") return null;
+	if (!dashboardAccessRestrictionReasons.has(reason)) return null;
+
+	return { reason, message: payload.message };
+}
+
 async function getAuthState(request: NextRequest): Promise<AuthState> {
 	if (!process.env.NEXT_PUBLIC_API_URL) {
 		return { status: "unauthenticated" };
@@ -89,6 +110,9 @@ async function getAuthState(request: NextRequest): Promise<AuthState> {
 			if (response.status === 401 && payload?.code === "two_factor_required") {
 				return { status: "requires_2fa" };
 			}
+
+			const restriction = getDashboardAccessRestriction(payload);
+			if (restriction) return { status: "unauthenticated", restriction };
 
 			return { status: "unauthenticated" };
 		}
@@ -123,8 +147,15 @@ export async function proxy(request: NextRequest) {
 	if (authState.status === "unauthenticated" && isPrivateRoute) {
 		const loginUrl = new URL(route.protected.login, request.url);
 		loginUrl.searchParams.set("redirect", request.nextUrl.href);
+		if (authState.restriction) {
+			loginUrl.searchParams.set("error", authState.restriction.reason);
+			loginUrl.searchParams.set("message", authState.restriction.message);
+		}
 
-		return NextResponse.redirect(loginUrl);
+		const response = NextResponse.redirect(loginUrl);
+		if (authState.restriction) response.cookies.delete(ACCESS_TOKEN_COOKIE);
+
+		return response;
 	}
 
 	if (authState.status === "requires_2fa" && !isTwoFactorVerifyRoute) {

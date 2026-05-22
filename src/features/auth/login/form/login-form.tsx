@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { CredentialResponse, GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQueryState } from "nuqs";
 import { FaGoogle } from "react-icons/fa";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -21,6 +22,24 @@ import { route } from "@/routes/routes";
 
 const DEFAULT_REDIRECT_URL = `${process.env.NEXT_PUBLIC_FRONTEND_URL}${route.private.dashboard}`;
 
+const dashboardAccessRestrictionMessages = {
+	account_pending_approval: "Your account is pending approval by an administrator.",
+	dashboard_role_not_allowed: "Your role is not allowed to access the dashboard."
+} as const;
+
+type DashboardAccessRestrictionCode = keyof typeof dashboardAccessRestrictionMessages;
+
+function isDashboardAccessRestrictionCode(
+	value: string | null
+): value is DashboardAccessRestrictionCode {
+	return !!value && value in dashboardAccessRestrictionMessages;
+}
+
+function getDashboardAccessRestrictionMessage(errorCode: string | null): string | null {
+	if (!isDashboardAccessRestrictionCode(errorCode)) return null;
+	return dashboardAccessRestrictionMessages[errorCode];
+}
+
 function resolveSafeRedirectUrl(redirectUrl: string | null): string {
 	if (!redirectUrl) return DEFAULT_REDIRECT_URL;
 	try {
@@ -35,6 +54,9 @@ function resolveSafeRedirectUrl(redirectUrl: string | null): string {
 
 export function LoginForm() {
 	const { redirectUrl } = useRedirect();
+	const [restrictionCode] = useQueryState("error", { parse: value => value ?? null });
+	const dashboardAccessRestrictionMessage =
+		getDashboardAccessRestrictionMessage(restrictionCode);
 	const [isRequestingMagicLink, setIsRequestingMagicLink] = useState(false);
 	const [magicLinkMessage, setMagicLinkMessage] = useState<string | null>(null);
 	const [magicLinkErrorMessage, setMagicLinkErrorMessage] = useState<string | null>(null);
@@ -122,6 +144,16 @@ export function LoginForm() {
 					<AlertTitle className="font-semibold text-sm">Private System</AlertTitle>
 					<AlertDescription className="text-xs">
 						Self-registration is closed. Only pre-authorized accounts can request magic links or sign in via Google.
+					</AlertDescription>
+				</Alert>
+			)}
+
+			{dashboardAccessRestrictionMessage && (
+				<Alert variant="destructive" className="rounded-xl mb-4">
+					<HugeiconsIcon icon={AlertCircleIcon} className="size-4" />
+					<AlertTitle className="font-semibold text-sm">Access restricted</AlertTitle>
+					<AlertDescription className="text-xs">
+						{dashboardAccessRestrictionMessage}
 					</AlertDescription>
 				</Alert>
 			)}

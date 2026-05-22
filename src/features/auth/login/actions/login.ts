@@ -6,10 +6,37 @@ import { forwardCookies, serverApi } from "@/lib/server-api";
 
 import { magicLinkRequestSchema } from "@/features/auth/login/schemas/login-schema";
 import { apiRoute, route } from "@/routes/routes";
-import { normalizeApiError } from "@/lib/api/errors";
+import { ApiError, normalizeApiError } from "@/lib/api/errors";
 
 const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
 const MAGIC_LINK_REDIRECT_MAX_AGE_SECONDS = 10 * 60;
+
+const dashboardAccessRestrictionReasons = new Set([
+	"account_pending_approval",
+	"dashboard_role_not_allowed"
+]);
+
+function getDashboardAccessRestrictionReason(error: ApiError): string | null {
+	const reason = error.payload.meta?.reason;
+
+	if (typeof reason !== "string") return null;
+	if (!dashboardAccessRestrictionReasons.has(reason)) return null;
+
+	return reason;
+}
+
+function buildDashboardAccessRestrictionLoginUrl(error: ApiError): string | null {
+	const reason = getDashboardAccessRestrictionReason(error);
+
+	if (!reason) return null;
+
+	const params = new URLSearchParams({
+		error: reason,
+		message: error.message
+	});
+
+	return `${route.protected.login}?${params.toString()}`;
+}
 
 function getFrontendUrl(): URL | null {
 	const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
@@ -129,7 +156,7 @@ export async function verifyMagicLink(
 	email: string,
 	token: string,
 	redirectUrl: string | null = null
-): Promise<{ success: boolean; message: string; redirectUrl: string }> {
+): Promise<{ success: boolean; message: string; redirectUrl: string | null }> {
 	try {
 		const safeRedirectUrl = resolveSafeRedirectUrl(redirectUrl);
 		const { headers } = await serverApi<{ message: string; data: User }>({
@@ -150,10 +177,12 @@ export async function verifyMagicLink(
 			redirectUrl: await consumeMagicLinkRedirectWithPreferred(safeRedirectUrl)
 		};
 	} catch (error) {
+		const apiError = normalizeApiError(error);
+
 		return {
 			success: false,
-			message: normalizeApiError(error).message,
-			redirectUrl: route.private.dashboard
+			message: apiError.message,
+			redirectUrl: buildDashboardAccessRestrictionLoginUrl(apiError)
 		};
 	}
 }

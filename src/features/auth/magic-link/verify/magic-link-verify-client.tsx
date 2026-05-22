@@ -40,6 +40,11 @@ export function MagicLinkVerifyClient({ email, token, redirectUrl }: MagicLinkVe
 		verifyMagicLink(email, token, redirectUrl)
 			.then(result => {
 				if (!result.success) {
+					if (result.redirectUrl) {
+						window.location.replace(result.redirectUrl);
+						return;
+					}
+
 					setStatus("error");
 					setMessage(result.message || "Magic link verification failed.");
 					return;
@@ -47,7 +52,7 @@ export function MagicLinkVerifyClient({ email, token, redirectUrl }: MagicLinkVe
 
 				setStatus("success");
 				setMessage("You are signed in. Redirecting...");
-				window.location.replace(result.redirectUrl);
+				window.location.replace(result.redirectUrl ?? route.private.dashboard);
 			})
 			.catch(() => {
 				setStatus("error");
