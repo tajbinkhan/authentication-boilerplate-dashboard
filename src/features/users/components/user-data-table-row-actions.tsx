@@ -3,6 +3,7 @@
 import {
 	ComputerRemoveIcon,
 	Delete02Icon,
+	EyeIcon,
 	LockKeyIcon,
 	MoreVerticalIcon,
 	ShieldBanIcon,
@@ -60,6 +61,7 @@ import {
 	useUpdateUserMutation,
 	useUpdateUserRoleMutation
 } from "@/features/users/actions/users.mutations";
+import { UserDetailsDialog } from "@/features/users/components/user-details-dialog";
 import { UserFormFields } from "@/features/users/components/user-form-fields";
 import {
 	CreateUserFormValues,
@@ -88,6 +90,7 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 	const deleteUserMutation = useDeleteUserMutation();
 	const revokeUserSessionsMutation = useRevokeUserSessionsMutation();
 	const resetUserTwoFactorMutation = useResetUserTwoFactorMutation();
+	const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 	const [editDialogOpen, setEditDialogOpen] = useState(false);
 	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -227,6 +230,17 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 						disabled={!manageable}
 						onSelect={event => {
 							event.preventDefault();
+							setDetailsDialogOpen(true);
+						}}
+					>
+						<HugeiconsIcon icon={EyeIcon} />
+						View details
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						disabled={!manageable}
+						onSelect={event => {
+							event.preventDefault();
 							editForm.reset(createEditValues(user));
 							setEditDialogOpen(true);
 						}}
@@ -303,6 +317,12 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
+
+			<UserDetailsDialog
+				user={user}
+				open={detailsDialogOpen}
+				onOpenChange={setDetailsDialogOpen}
+			/>
 
 			<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
 				<DialogContent className="sm:max-w-2xl">

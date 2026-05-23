@@ -1,0 +1,159 @@
+"use client";
+
+import {
+	Cancel01Icon,
+	CancelCircleIcon,
+	RefreshIcon,
+	Search
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { Table } from "@tanstack/react-table";
+import { useEffect, useMemo, useState } from "react";
+
+import { DataTableDateRangeFilter } from "@/components/common/table/data-table-date-range-filter";
+import { DataTableSingleSelectFacetedFilter } from "@/components/common/table/data-table-single-select-faceted-filter";
+import { DataTableViewOptions } from "@/components/common/table/data-table-view-options";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { useAuditLogList } from "@/features/audit-logs/context/audit-log-list-context";
+import {
+	auditLogActionValues,
+	auditLogTargetTypeValues
+} from "@/features/audit-logs/types/audit-logs.types";
+import {
+	formatAuditAction,
+	formatAuditTargetType
+} from "@/features/audit-logs/utils/audit-log-format";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+
+interface AuditLogsDataTableToolbarProps<TData> {
+	table: Table<TData>;
+}
+
+export function AuditLogsDataTableToolbar<TData>({
+	table
+}: AuditLogsDataTableToolbarProps<TData>) {
+	const {
+		actorId,
+		action,
+		targetType,
+		fromDate,
+		toDate,
+		isFetching,
+		handleActorIdChange,
+		handleDateRangeChange,
+		handleOptionFilter,
+		handleResetAll,
+		handleRefresh
+	} = useAuditLogList();
+	const [actorIdInput, setActorIdInput] = useState(actorId);
+	const debouncedActorId = useDebouncedValue(actorIdInput, 400);
+
+	const actionFilterOptions = useMemo(
+		() =>
+			auditLogActionValues.map(value => ({
+				label: formatAuditAction(value),
+				value
+			})),
+		[]
+	);
+
+	const targetTypeFilterOptions = useMemo(
+		() =>
+			auditLogTargetTypeValues.map(value => ({
+				label: formatAuditTargetType(value),
+				value
+			})),
+		[]
+	);
+
+	const hasFilters = Boolean(actorId || action || targetType || fromDate || toDate);
+
+	useEffect(() => {
+		if (debouncedActorId === actorId) return;
+
+		handleActorIdChange(debouncedActorId);
+	}, [actorId, debouncedActorId, handleActorIdChange]);
+
+	const handleClearActorId = () => {
+		setActorIdInput("");
+		handleActorIdChange("");
+	};
+
+	const handleResetFilters = () => {
+		setActorIdInput("");
+		handleResetAll();
+	};
+
+	return (
+		<div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+			<div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+				<Field className="gap-1 sm:max-w-96">
+					<InputGroup className="h-8 max-w-sm">
+						<InputGroupInput
+							id="audit-logs-actor-id"
+							value={actorIdInput}
+							placeholder="Actor UUID..."
+							onChange={event => setActorIdInput(event.target.value)}
+						/>
+						<InputGroupAddon>
+							<HugeiconsIcon icon={Search} data-icon="inline-start" />
+						</InputGroupAddon>
+						<InputGroupAddon align="inline-end">
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon"
+								className={actorIdInput ? "size-6" : "invisible size-6"}
+								onClick={handleClearActorId}
+							>
+								<span className="sr-only">Clear actor ID</span>
+								<HugeiconsIcon icon={CancelCircleIcon} />
+							</Button>
+						</InputGroupAddon>
+					</InputGroup>
+				</Field>
+				<div className="flex flex-row flex-wrap items-center gap-2">
+					<DataTableSingleSelectFacetedFilter
+						title="Action"
+						queryParameter="action"
+						options={actionFilterOptions}
+						onValueChange={() => handleOptionFilter("page", "1")}
+					/>
+					<DataTableSingleSelectFacetedFilter
+						title="Target"
+						queryParameter="targetType"
+						options={targetTypeFilterOptions}
+						onValueChange={() => handleOptionFilter("page", "1")}
+					/>
+					{hasFilters ? (
+						<Button type="button" variant="ghost" size="sm" onClick={handleResetFilters}>
+							Reset
+							<HugeiconsIcon icon={Cancel01Icon} />
+						</Button>
+					) : null}
+				</div>
+			</div>
+			<div className="flex flex-col gap-2 sm:items-end">
+				<div className="flex flex-wrap items-center gap-2 sm:justify-end">
+					<Button type="button" size="sm" onClick={handleRefresh} disabled={isFetching}>
+						<HugeiconsIcon
+							icon={RefreshIcon}
+							data-icon="inline-start"
+							className={isFetching ? "animate-spin" : undefined}
+						/>
+						Refresh
+					</Button>
+					<DataTableDateRangeFilter
+						id="audit-logs-date-range"
+						fromDate={fromDate}
+						toDate={toDate}
+						onChange={handleDateRangeChange}
+					/>
+					<DataTableViewOptions table={table} />
+				</div>
+			</div>
+		</div>
+	);
+}

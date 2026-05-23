@@ -8,6 +8,7 @@ export const route = {
 		profile: "/profile",
 		users: "/users",
 		sessions: "/sessions",
+		auditLogs: "/audit-logs",
 		system: "/system"
 	},
 	protected: {
@@ -34,6 +35,7 @@ export const apiRoute = {
 	logout: "/auth/logout",
 	users: "/users",
 	user: (id: string) => `/users/${id}`,
+	auditLogs: "/audit-logs",
 	userRole: (id: string) => `/users/${id}/role`,
 	userSessionsRevoke: (id: string) => `/users/${id}/sessions/revoke`,
 	userTwoFactorReset: (id: string) => `/users/${id}/2fa/reset`,

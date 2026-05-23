@@ -25,6 +25,13 @@ export async function listUsers(filters: UserListQuery): Promise<UserListRespons
 	});
 }
 
+export async function getUser(id: string): Promise<ManagedUser> {
+	return apiClient<ManagedUser>({
+		method: "GET",
+		url: apiRoute.user(id)
+	});
+}
+
 export async function createUser(data: CreateUserInput): Promise<ManagedUser> {
 	return apiClient<ManagedUser>({
 		method: "POST",

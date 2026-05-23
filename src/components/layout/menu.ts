@@ -1,4 +1,5 @@
 import {
+	Audit01Icon,
 	ComputerProtectionIcon,
 	DashboardSquare01Icon,
 	Settings02Icon,
@@ -33,6 +34,12 @@ const navItem: NavItemProps[] = [
 		title: "Users",
 		url: route.private.users,
 		icon: UserGroupIcon,
+		roles: ["ADMIN", "SUPER_ADMIN"]
+	},
+	{
+		title: "Audit Logs",
+		url: route.private.auditLogs,
+		icon: Audit01Icon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
 	},
 	{
