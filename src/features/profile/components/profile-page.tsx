@@ -1,6 +1,7 @@
 "use client";
 
 import { TwoFactorSecurityCard } from "@/features/auth/two-factor/components/two-factor-security-card";
+import { PasswordCard } from "@/features/profile/components/password-card";
 import { ProfileUpdateCard } from "@/features/profile/components/profile-update-card";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
@@ -24,9 +25,9 @@ export default function ProfilePage() {
 				<div className="grid gap-6 xl:grid-cols-2">
 					<ProfileUpdateCard />
 					<TwoFactorSecurityCard />
+					<PasswordCard />
 				</div>
 			</div>
 		</>
 	);
 }
-

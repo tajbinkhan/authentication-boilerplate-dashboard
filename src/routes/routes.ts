@@ -20,6 +20,7 @@ export const route = {
 
 export const apiRoute = {
 	csrf: "/csrf",
+	passwordLogin: "/auth/login",
 	googleLogin: "/auth/google",
 	magicLinkRequest: "/auth/magic-link/request",
 	magicLinkVerify: "/auth/magic-link/verify",
@@ -43,7 +44,9 @@ export const apiRoute = {
 	sessionRevoke: (id: string) => `/auth/sessions/${id}/revoke`,
 	revokeOtherSessions: "/auth/sessions/revoke-others",
 	systemSettingsPublic: "/system/settings/public",
-	systemSettings: "/system/settings"
+	systemSettings: "/system/settings",
+	setPassword: "/auth/password/set",
+	changePassword: "/auth/password/change"
 } as const;
 
 const DEFAULT_LOGIN_REDIRECT = route.private.dashboard;
@@ -52,3 +55,5 @@ const appRoutePrefix = process.env.NEXT_PUBLIC_FRONTEND_URL;
 const apiRoutePrefix = process.env.NEXT_PUBLIC_API_URL;
 
 export { apiRoutePrefix, appRoutePrefix, DEFAULT_LOGIN_REDIRECT };
+
+

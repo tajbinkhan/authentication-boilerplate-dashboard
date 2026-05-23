@@ -38,8 +38,6 @@ function AuditLogsPageContent() {
 	useEffect(() => {
 		if (!error) return;
 
-		console.log("err", error);
-
 		handleRequestError(error, router, "Failed to load audit logs");
 	}, [error, router]);
 

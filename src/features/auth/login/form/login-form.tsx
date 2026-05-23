@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircleIcon, Loading03Icon, Mail01Icon, MailSend01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { AlertCircleIcon, Loading03Icon, LockSync01Icon, Mail01Icon, MailSend01Icon, Tick02Icon, UserCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CredentialResponse, GoogleLogin, useGoogleOneTapLogin } from "@react-oauth/google";
 import { useEffect, useState } from "react";
@@ -13,8 +13,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldContent, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { magicLinkRequestSchema, type MagicLinkRequestSchema } from "@/features/auth/login/schemas/login-schema";
+import { loginSchema, magicLinkRequestSchema, type LoginSchema, type MagicLinkRequestSchema } from "@/features/auth/login/schemas/login-schema";
 import { googleLogin, requestMagicLink } from "@/features/auth/login/actions/login";
+import { passwordLogin } from "@/features/auth/login/actions/password-login";
 import { getPublicSettings } from "@/features/system/actions/system.actions";
 import type { PublicSystemSettings } from "@/features/system/types/system.types";
 import useRedirect from "@/hooks/use-redirect";
@@ -52,16 +53,21 @@ function resolveSafeRedirectUrl(redirectUrl: string | null): string {
 	}
 }
 
+type LoginMode = "password" | "magic-link";
+
 export function LoginForm() {
 	const { redirectUrl } = useRedirect();
 	const [restrictionCode] = useQueryState("error", { parse: value => value ?? null });
 	const dashboardAccessRestrictionMessage =
 		getDashboardAccessRestrictionMessage(restrictionCode);
+	const [loginMode, setLoginMode] = useState<LoginMode>("password");
 	const [isRequestingMagicLink, setIsRequestingMagicLink] = useState(false);
 	const [magicLinkMessage, setMagicLinkMessage] = useState<string | null>(null);
 	const [magicLinkErrorMessage, setMagicLinkErrorMessage] = useState<string | null>(null);
 	const [isLoggingInWithGoogle, setIsLoggingInWithGoogle] = useState(false);
 	const [googleErrorMessage, setGoogleErrorMessage] = useState<string | null>(null);
+	const [isLoggingInWithPassword, setIsLoggingInWithPassword] = useState(false);
+	const [passwordErrorMessage, setPasswordErrorMessage] = useState<string | null>(null);
 	const [publicSettings, setPublicSettings] = useState<PublicSystemSettings | null>(null);
 
 	useEffect(() => {
@@ -75,12 +81,21 @@ export function LoginForm() {
 	}, []);
 
 	const {
-		register,
-		handleSubmit,
-		formState: { errors }
+		register: registerMagicLink,
+		handleSubmit: handleSubmitMagicLink,
+		formState: { errors: magicLinkErrors }
 	} = useForm<MagicLinkRequestSchema>({
 		resolver: zodResolver(magicLinkRequestSchema),
 		defaultValues: { email: "" }
+	});
+
+	const {
+		register: registerPassword,
+		handleSubmit: handleSubmitPassword,
+		formState: { errors: passwordErrors }
+	} = useForm<LoginSchema>({
+		resolver: zodResolver(loginSchema),
+		defaultValues: { email: "", password: "" }
 	});
 
 	const handleMagicLinkSubmit = async (values: MagicLinkRequestSchema) => {
@@ -98,6 +113,23 @@ export function LoginForm() {
 			);
 		} finally {
 			setIsRequestingMagicLink(false);
+		}
+	};
+
+	const handlePasswordSubmit = async (values: LoginSchema) => {
+		setIsLoggingInWithPassword(true);
+		setPasswordErrorMessage(null);
+
+		try {
+			const result = await passwordLogin(values.email, values.password);
+			if (!result.success) throw new Error(result.message || "Login failed.");
+			window.location.assign(resolveSafeRedirectUrl(redirectUrl));
+		} catch (error) {
+			setPasswordErrorMessage(
+				error instanceof Error ? error.message : "Login failed. Please try again."
+			);
+		} finally {
+			setIsLoggingInWithPassword(false);
 		}
 	};
 
@@ -143,7 +175,7 @@ export function LoginForm() {
 					<HugeiconsIcon icon={AlertCircleIcon} className="size-4 text-amber-600 dark:text-amber-400" />
 					<AlertTitle className="font-semibold text-sm">Private System</AlertTitle>
 					<AlertDescription className="text-xs">
-						Self-registration is closed. Only pre-authorized accounts can request magic links or sign in via Google.
+						Self-registration is closed. Only pre-authorized accounts can sign in.
 					</AlertDescription>
 				</Alert>
 			)}
@@ -158,47 +190,136 @@ export function LoginForm() {
 				</Alert>
 			)}
 
-			<form className="space-y-4" onSubmit={handleSubmit(handleMagicLinkSubmit)} noValidate>
-				<Field>
-					<FieldLabel htmlFor="magic-link-email">Email address</FieldLabel>
-					<FieldContent>
-						<div className="relative">
-							<HugeiconsIcon
-								icon={Mail01Icon}
-								className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
-							/>
-							<Input
-								id="magic-link-email"
-								type="email"
-								{...register("email")}
-								placeholder="you@example.com"
-								autoComplete="email"
-								className="h-12 rounded-xl pl-10"
-								disabled={isRequestingMagicLink}
-							/>
-						</div>
-						<FieldError>{errors.email?.message}</FieldError>
-					</FieldContent>
-				</Field>
-
+			<div className="flex gap-2 mb-4">
 				<Button
-					type="submit"
-					className="h-12 w-full justify-center gap-3 rounded-xl px-4"
-					disabled={isRequestingMagicLink || isLoggingInWithGoogle}
+					type="button"
+					variant={loginMode === "password" ? "default" : "outline"}
+					className="flex-1 rounded-xl"
+					onClick={() => setLoginMode("password")}
 				>
-					{isRequestingMagicLink ? (
-						<>
-							<HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
-							<span className="text-sm font-semibold">Sending link...</span>
-						</>
-					) : (
-						<>
-							<HugeiconsIcon icon={MailSend01Icon} className="size-4" />
-							<span className="text-sm font-semibold">Send magic link</span>
-						</>
-					)}
+					<HugeiconsIcon icon={LockSync01Icon} className="size-4 mr-2" />
+					Password
 				</Button>
-			</form>
+				<Button
+					type="button"
+					variant={loginMode === "magic-link" ? "default" : "outline"}
+					className="flex-1 rounded-xl"
+					onClick={() => setLoginMode("magic-link")}
+				>
+					<HugeiconsIcon icon={MailSend01Icon} className="size-4 mr-2" />
+					Magic Link
+				</Button>
+			</div>
+
+			{loginMode === "password" && (
+				<form className="space-y-4" onSubmit={handleSubmitPassword(handlePasswordSubmit)} noValidate>
+					<Field>
+						<FieldLabel htmlFor="password-email">Email address</FieldLabel>
+						<FieldContent>
+							<div className="relative">
+								<HugeiconsIcon
+									icon={Mail01Icon}
+									className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+								/>
+								<Input
+									id="password-email"
+									type="email"
+									{...registerPassword("email")}
+									placeholder="you@example.com"
+									autoComplete="email"
+									className="h-12 rounded-xl pl-10"
+									disabled={isLoggingInWithPassword}
+								/>
+							</div>
+							<FieldError>{passwordErrors.email?.message}</FieldError>
+						</FieldContent>
+					</Field>
+
+					<Field>
+						<FieldLabel htmlFor="password">Password</FieldLabel>
+						<FieldContent>
+							<div className="relative">
+								<HugeiconsIcon
+									icon={LockSync01Icon}
+									className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+								/>
+								<Input
+									id="password"
+									type="password"
+									{...registerPassword("password")}
+									placeholder="Enter your password"
+									autoComplete="current-password"
+									className="h-12 rounded-xl pl-10"
+									disabled={isLoggingInWithPassword}
+								/>
+							</div>
+							<FieldError>{passwordErrors.password?.message}</FieldError>
+						</FieldContent>
+					</Field>
+
+					<Button
+						type="submit"
+						className="h-12 w-full justify-center gap-3 rounded-xl px-4"
+						disabled={isLoggingInWithPassword || isLoggingInWithGoogle}
+					>
+						{isLoggingInWithPassword ? (
+							<>
+								<HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
+								<span className="text-sm font-semibold">Signing in...</span>
+							</>
+						) : (
+							<>
+								<HugeiconsIcon icon={UserCircleIcon} className="size-4" />
+								<span className="text-sm font-semibold">Sign in with password</span>
+							</>
+						)}
+					</Button>
+				</form>
+			)}
+
+			{loginMode === "magic-link" && (
+				<form className="space-y-4" onSubmit={handleSubmitMagicLink(handleMagicLinkSubmit)} noValidate>
+					<Field>
+						<FieldLabel htmlFor="magic-link-email">Email address</FieldLabel>
+						<FieldContent>
+							<div className="relative">
+								<HugeiconsIcon
+									icon={Mail01Icon}
+									className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+								/>
+								<Input
+									id="magic-link-email"
+									type="email"
+									{...registerMagicLink("email")}
+									placeholder="you@example.com"
+									autoComplete="email"
+									className="h-12 rounded-xl pl-10"
+									disabled={isRequestingMagicLink}
+								/>
+							</div>
+							<FieldError>{magicLinkErrors.email?.message}</FieldError>
+						</FieldContent>
+					</Field>
+
+					<Button
+						type="submit"
+						className="h-12 w-full justify-center gap-3 rounded-xl px-4"
+						disabled={isRequestingMagicLink || isLoggingInWithGoogle}
+					>
+						{isRequestingMagicLink ? (
+							<>
+								<HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
+								<span className="text-sm font-semibold">Sending link...</span>
+							</>
+						) : (
+							<>
+								<HugeiconsIcon icon={MailSend01Icon} className="size-4" />
+								<span className="text-sm font-semibold">Send magic link</span>
+							</>
+						)}
+					</Button>
+				</form>
+			)}
 
 			{magicLinkMessage && (
 				<Alert className="border-primary/20 bg-primary/5 text-primary">
@@ -211,6 +332,12 @@ export function LoginForm() {
 			{magicLinkErrorMessage && (
 				<p className="text-destructive text-center text-sm" role="alert">
 					{magicLinkErrorMessage}
+				</p>
+			)}
+
+			{passwordErrorMessage && (
+				<p className="text-destructive text-center text-sm" role="alert">
+					{passwordErrorMessage}
 				</p>
 			)}
 
@@ -230,7 +357,7 @@ export function LoginForm() {
 					<div className="relative h-12 w-full">
 						<Button
 							type="button"
-							disabled={isLoggingInWithGoogle || isRequestingMagicLink}
+							disabled={isLoggingInWithGoogle || isRequestingMagicLink || isLoggingInWithPassword}
 							className="pointer-events-none h-12 w-full justify-center gap-3 rounded-xl px-4"
 						>
 							{isLoggingInWithGoogle ? (
@@ -246,7 +373,7 @@ export function LoginForm() {
 							)}
 						</Button>
 
-						{!isLoggingInWithGoogle && !isRequestingMagicLink && (
+						{!isLoggingInWithGoogle && !isRequestingMagicLink && !isLoggingInWithPassword && (
 							<div className="absolute inset-0 overflow-hidden rounded-xl opacity-0">
 								<GoogleLogin
 									onSuccess={handleGoogleSuccess}
@@ -271,9 +398,10 @@ export function LoginForm() {
 				)}
 
 				<p className="text-muted-foreground text-center text-xs">
-					Secure authentication powered by magic links and Google
+					Secure authentication powered by password, magic links, and Google
 				</p>
 			</div>
 		</>
 	);
 }
+
