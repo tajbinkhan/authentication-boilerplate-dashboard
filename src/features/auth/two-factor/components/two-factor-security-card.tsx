@@ -61,8 +61,7 @@ export function TwoFactorSecurityCard() {
 	const {
 		register,
 		handleSubmit,
-		reset: resetSetupForm,
-		formState: { errors: setupErrors }
+		reset: resetSetupForm
 	} = useForm<TwoFactorCodeFormValues>({
 		resolver: zodResolver(twoFactorCodeFormSchema),
 		defaultValues: { code: "" }
@@ -89,6 +88,7 @@ export function TwoFactorSecurityCard() {
 				onSuccess: result => {
 					setRecoveryCodes(result.recoveryCodes);
 					toast.success("Two-factor authentication enabled");
+					window.location.reload();
 				},
 				onError: error => toast.error(getErrorMessage(error, "Failed to confirm 2FA setup"))
 			}
@@ -102,6 +102,7 @@ export function TwoFactorSecurityCard() {
 				onSuccess: () => {
 					toast.success("Two-factor authentication disabled");
 					setDisableOpen(false);
+					window.location.reload();
 				},
 				onError: error => toast.error(getErrorMessage(error, "Failed to disable 2FA"))
 			}
