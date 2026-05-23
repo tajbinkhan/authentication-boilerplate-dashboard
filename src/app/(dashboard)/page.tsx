@@ -245,7 +245,7 @@ export default function DashboardPage() {
 					<h2 className="mb-4 text-lg font-semibold">Quick Actions</h2>
 					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 						<Button variant="outline" className="h-auto flex-col items-start gap-3 p-4" asChild>
-							<a href={route.private.profile}>
+							<Link href={route.private.profile}>
 								<div className="flex items-center gap-3">
 									<div className="bg-primary/10 rounded-lg p-2">
 										<HugeiconsIcon icon={UserEdit01Icon} className="text-primary size-5" />
@@ -257,7 +257,7 @@ export default function DashboardPage() {
 										</div>
 									</div>
 								</div>
-							</a>
+							</Link>
 						</Button>
 
 						<Button variant="outline" className="h-auto flex-col items-start gap-3 p-4" asChild>
