@@ -35,6 +35,8 @@ export interface AuditLog {
 	id: string;
 	actorId: string | null;
 	actorRole: UserRole | null;
+	actorName: string | null;
+	actorEmail: string | null;
 	action: AuditLogAction | string;
 	targetType: AuditLogTargetType | string;
 	targetId: string;
@@ -51,6 +53,7 @@ export interface AuditLogListQuery {
 	page: number;
 	pageSize: number;
 	actorId?: string;
+	actor?: string;
 	action?: AuditLogAction | string;
 	targetType?: AuditLogTargetType | string;
 	fromDate?: string;

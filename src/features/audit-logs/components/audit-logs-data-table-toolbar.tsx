@@ -28,20 +28,20 @@ interface AuditLogsDataTableToolbarProps<TData> {
 
 export function AuditLogsDataTableToolbar<TData>({ table }: AuditLogsDataTableToolbarProps<TData>) {
 	const {
-		actorId,
+		actor,
 		action,
 		targetType,
 		fromDate,
 		toDate,
 		isFetching,
-		handleActorIdChange,
+		handleActorChange,
 		handleDateRangeChange,
 		handleOptionFilter,
 		handleResetAll,
 		handleRefresh
 	} = useAuditLogList();
-	const [actorIdInput, setActorIdInput] = useState(actorId);
-	const debouncedActorId = useDebouncedValue(actorIdInput, 400);
+	const [actorInput, setActorInput] = useState(actor);
+	const debouncedActor = useDebouncedValue(actorInput, 400);
 
 	const actionFilterOptions = useMemo(
 		() =>
@@ -61,21 +61,21 @@ export function AuditLogsDataTableToolbar<TData>({ table }: AuditLogsDataTableTo
 		[]
 	);
 
-	const hasFilters = Boolean(actorId || action || targetType || fromDate || toDate);
+	const hasFilters = Boolean(actor || action || targetType || fromDate || toDate);
 
 	useEffect(() => {
-		if (debouncedActorId === actorId) return;
+		if (debouncedActor === actor) return;
 
-		handleActorIdChange(debouncedActorId);
-	}, [actorId, debouncedActorId, handleActorIdChange]);
+		handleActorChange(debouncedActor);
+	}, [actor, debouncedActor, handleActorChange]);
 
-	const handleClearActorId = () => {
-		setActorIdInput("");
-		handleActorIdChange("");
+	const handleClearActor = () => {
+		setActorInput("");
+		handleActorChange("");
 	};
 
 	const handleResetFilters = () => {
-		setActorIdInput("");
+		setActorInput("");
 		handleResetAll();
 	};
 
@@ -85,10 +85,10 @@ export function AuditLogsDataTableToolbar<TData>({ table }: AuditLogsDataTableTo
 				<Field className="gap-1 sm:max-w-96">
 					<InputGroup className="h-8 max-w-sm">
 						<InputGroupInput
-							id="audit-logs-actor-id"
-							value={actorIdInput}
-							placeholder="Actor UUID..."
-							onChange={event => setActorIdInput(event.target.value)}
+							id="audit-logs-actor"
+							value={actorInput}
+							placeholder="Search by name or email..."
+							onChange={event => setActorInput(event.target.value)}
 						/>
 						<InputGroupAddon>
 							<HugeiconsIcon icon={Search} data-icon="inline-start" />
@@ -98,10 +98,10 @@ export function AuditLogsDataTableToolbar<TData>({ table }: AuditLogsDataTableTo
 								type="button"
 								variant="ghost"
 								size="icon"
-								className={actorIdInput ? "size-6" : "invisible size-6"}
-								onClick={handleClearActorId}
+								className={actorInput ? "size-6" : "invisible size-6"}
+								onClick={handleClearActor}
 							>
-								<span className="sr-only">Clear actor ID</span>
+								<span className="sr-only">Clear actor search</span>
 								<HugeiconsIcon icon={CancelCircleIcon} />
 							</Button>
 						</InputGroupAddon>

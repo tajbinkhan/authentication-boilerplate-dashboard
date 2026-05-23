@@ -9,6 +9,7 @@ export const auditLogSearchParams = {
 	page: parseAsInteger.withDefault(1),
 	pageSize: parseAsInteger.withDefault(10),
 	actorId: parseAsString.withDefault(""),
+	actor: parseAsString.withDefault(""),
 	action: parseAsString.withDefault(""),
 	targetType: parseAsString.withDefault(""),
 	fromDate: parseAsString.withDefault(""),

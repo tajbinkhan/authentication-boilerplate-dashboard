@@ -145,6 +145,15 @@ function ActorCell({ log }: { log: AuditLog }) {
 		);
 	}
 
+	if (log.actorName || log.actorEmail) {
+		return (
+			<div className="flex min-w-0 flex-col gap-1">
+				<span className="font-medium">{log.actorName ?? "Unknown"}</span>
+				<span className="text-muted-foreground text-xs">{log.actorEmail ?? "Unknown email"}</span>
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
 			<span className="font-medium">{formatShortId(log.actorId)}</span>

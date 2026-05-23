@@ -33,6 +33,11 @@ const actorIdQuerySchema = z.preprocess(
 	z.uuid().optional().catch(undefined)
 );
 
+const actorQuerySchema = z
+	.preprocess(firstSearchParamValue, z.string().optional())
+	.optional()
+	.catch(undefined);
+
 const actionQuerySchema = z
 	.preprocess(firstSearchParamValue, z.string().optional())
 	.optional()
@@ -72,6 +77,7 @@ export const auditLogListQuerySchema = z
 		page: pageQuerySchema,
 		pageSize: pageSizeQuerySchema,
 		actorId: actorIdQuerySchema,
+		actor: actorQuerySchema,
 		action: actionQuerySchema,
 		targetType: targetTypeQuerySchema,
 		fromDate: dateQuerySchema,
@@ -90,6 +96,7 @@ export function createAuditLogListQuery(input: unknown): AuditLogListQuery {
 		page: query.page,
 		pageSize: query.pageSize,
 		actorId: query.actorId,
+		actor: query.actor,
 		action: query.action,
 		targetType: query.targetType,
 		fromDate: query.fromDate,

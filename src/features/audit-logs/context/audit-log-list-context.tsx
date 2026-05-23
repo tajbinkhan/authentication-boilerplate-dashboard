@@ -25,7 +25,7 @@ interface AuditLogListContextValue {
 	isLoading: boolean;
 	isFetching: boolean;
 	error: unknown;
-	actorId: string;
+	actor: string;
 	action: string;
 	targetType: string;
 	fromDate: string;
@@ -34,7 +34,7 @@ interface AuditLogListContextValue {
 	dir: AuditLogSortDirection;
 	handleSorting: (sort: string, dir: AuditLogSortDirection) => void;
 	handleOptionFilter: (key: string, value?: string | string[] | null) => void;
-	handleActorIdChange: (value: string) => void;
+	handleActorChange: (value: string) => void;
 	handleDateRangeChange: (value: { fromDate?: string; toDate?: string }) => void;
 	handleResetAll: () => void;
 	handleRefresh: () => void;
@@ -59,6 +59,7 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 			page: params.page,
 			pageSize: params.pageSize,
 			actorId: params.actorId || undefined,
+			actor: params.actor || undefined,
 			action: params.action ? (params.action as AuditLogAction) : undefined,
 			targetType: params.targetType ? (params.targetType as AuditLogTargetType) : undefined,
 			fromDate: params.fromDate || undefined,
@@ -68,6 +69,7 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 		}),
 		[
 			params.action,
+			params.actor,
 			params.actorId,
 			params.dir,
 			params.fromDate,
@@ -109,9 +111,9 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 		[setParams]
 	);
 
-	const handleActorIdChange = useCallback(
+	const handleActorChange = useCallback(
 		(value: string) => {
-			void setParams({ actorId: value.trim() || null, page: 1 });
+			void setParams({ actor: value.trim() || null, page: 1 });
 		},
 		[setParams]
 	);
@@ -132,6 +134,7 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 			page: 1,
 			pageSize: 10,
 			actorId: null,
+			actor: null,
 			action: null,
 			targetType: null,
 			fromDate: null,
@@ -161,7 +164,7 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 			isLoading: auditLogsQuery.isLoading,
 			isFetching: auditLogsQuery.isFetching,
 			error: auditLogsQuery.error,
-			actorId: params.actorId,
+			actor: params.actor,
 			action: params.action,
 			targetType: params.targetType,
 			fromDate: params.fromDate,
@@ -170,7 +173,7 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 			dir: params.dir,
 			handleSorting,
 			handleOptionFilter,
-			handleActorIdChange,
+			handleActorChange,
 			handleDateRangeChange,
 			handleResetAll,
 			handleRefresh
@@ -179,7 +182,7 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 			auditLogsQuery.error,
 			auditLogsQuery.isFetching,
 			auditLogsQuery.isLoading,
-			handleActorIdChange,
+			handleActorChange,
 			handleDateRangeChange,
 			handleOptionFilter,
 			handleRefresh,
@@ -190,7 +193,7 @@ export function AuditLogListProvider({ children }: AuditLogListProviderProps) {
 			pagination.rows,
 			pagination.total,
 			params.action,
-			params.actorId,
+			params.actor,
 			params.dir,
 			params.fromDate,
 			params.sort,

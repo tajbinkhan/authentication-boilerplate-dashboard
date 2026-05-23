@@ -36,8 +36,12 @@ export function AuditLogDetails({ log }: AuditLogDetailsProps) {
 				<h3 className="text-sm font-medium">Actor and target</h3>
 				<div className="grid gap-3 sm:grid-cols-2">
 					<DetailItem
-						label="Actor"
-						value={isSystemAuditLog(log) ? "System" : formatAuditActor(log)}
+						label="Actor name"
+						value={isSystemAuditLog(log) ? "System" : (log.actorName ?? formatAuditActor(log))}
+					/>
+					<DetailItem
+						label="Actor email"
+						value={isSystemAuditLog(log) ? "System" : (log.actorEmail ?? "Not available")}
 					/>
 					<DetailItem
 						label="Actor role"

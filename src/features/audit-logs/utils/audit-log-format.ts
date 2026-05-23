@@ -35,8 +35,18 @@ export function formatAuditDate(value: string): string {
 }
 
 export function formatAuditActor(log: AuditLog): string {
-	if (!log.actorId && !log.actorRole) {
+	if (!log.actorId && !log.actorRole && !log.actorName && !log.actorEmail) {
 		return "System";
+	}
+
+	if (log.actorName) {
+		return log.actorEmail
+			? `${log.actorName} (${log.actorEmail})`
+			: log.actorName;
+	}
+
+	if (log.actorEmail) {
+		return log.actorEmail;
 	}
 
 	if (log.actorRole) {
