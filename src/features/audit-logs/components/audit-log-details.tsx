@@ -65,7 +65,11 @@ export function AuditLogDetails({ log }: AuditLogDetailsProps) {
 					<DetailItem label="IP address" value={log.ipAddress ?? "Unknown"} />
 					<DetailItem label="Created" value={formatAuditDate(log.createdAt)} />
 					<DetailItem label="Updated" value={formatAuditDate(log.updatedAt)} />
-					<DetailItem label="User agent" value={log.userAgent ?? "Unknown"} className="sm:col-span-2" />
+					<DetailItem
+						label="User agent"
+						value={log.userAgent ?? "Unknown"}
+						className="sm:col-span-2"
+					/>
 				</div>
 			</section>
 
@@ -93,7 +97,7 @@ function DetailItem({
 	return (
 		<div className={className}>
 			<div className="text-muted-foreground text-xs">{label}</div>
-			<div className="break-words text-sm">{value}</div>
+			<div className="text-sm wrap-break-word">{value}</div>
 		</div>
 	);
 }
@@ -110,3 +114,4 @@ function ActionBadge({ action }: { action: string }) {
 
 	return <Badge variant={variant}>{formatAuditAction(action)}</Badge>;
 }
+
