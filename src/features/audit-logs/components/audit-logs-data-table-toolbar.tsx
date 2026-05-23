@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	Cancel01Icon,
-	CancelCircleIcon,
-	RefreshIcon,
-	Search
-} from "@hugeicons/core-free-icons";
+import { Cancel01Icon, CancelCircleIcon, RefreshIcon, Search } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Table } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
@@ -31,9 +26,7 @@ interface AuditLogsDataTableToolbarProps<TData> {
 	table: Table<TData>;
 }
 
-export function AuditLogsDataTableToolbar<TData>({
-	table
-}: AuditLogsDataTableToolbarProps<TData>) {
+export function AuditLogsDataTableToolbar<TData>({ table }: AuditLogsDataTableToolbarProps<TData>) {
 	const {
 		actorId,
 		action,
@@ -114,7 +107,7 @@ export function AuditLogsDataTableToolbar<TData>({
 						</InputGroupAddon>
 					</InputGroup>
 				</Field>
-				<div className="flex flex-row flex-wrap items-center gap-2">
+				<div className="flex flex-row items-center gap-2">
 					<DataTableSingleSelectFacetedFilter
 						title="Action"
 						queryParameter="action"
@@ -157,3 +150,4 @@ export function AuditLogsDataTableToolbar<TData>({
 		</div>
 	);
 }
+

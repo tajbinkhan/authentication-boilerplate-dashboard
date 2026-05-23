@@ -1,10 +1,8 @@
 import { z } from "zod";
 
 import {
-	auditLogActionValues,
 	auditLogSortDirectionValues,
 	auditLogSortValues,
-	auditLogTargetTypeValues,
 	type AuditLogListQuery
 } from "@/features/audit-logs/types/audit-logs.types";
 import { validateEnum } from "@/validators/common-rule";
@@ -36,12 +34,12 @@ const actorIdQuerySchema = z.preprocess(
 );
 
 const actionQuerySchema = z
-	.preprocess(firstSearchParamValue, validateEnum("Action", auditLogActionValues))
+	.preprocess(firstSearchParamValue, z.string().optional())
 	.optional()
 	.catch(undefined);
 
 const targetTypeQuerySchema = z
-	.preprocess(firstSearchParamValue, validateEnum("Target type", auditLogTargetTypeValues))
+	.preprocess(firstSearchParamValue, z.string().optional())
 	.optional()
 	.catch(undefined);
 

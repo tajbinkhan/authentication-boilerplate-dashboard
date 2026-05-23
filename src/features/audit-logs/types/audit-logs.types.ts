@@ -51,8 +51,8 @@ export interface AuditLogListQuery {
 	page: number;
 	pageSize: number;
 	actorId?: string;
-	action?: AuditLogAction;
-	targetType?: AuditLogTargetType;
+	action?: AuditLogAction | string;
+	targetType?: AuditLogTargetType | string;
 	fromDate?: string;
 	toDate?: string;
 	sort: AuditLogSort;
