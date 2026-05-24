@@ -210,4 +210,4 @@ Agent rules are in `.github/agents/frontend-coding.agent.md`.
 
 ## License
 
-Private — all rights reserved.
+MIT — see [LICENSE](LICENSE) for details.
