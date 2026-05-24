@@ -9,6 +9,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { ApiError } from "@/lib/api/errors";
+import { handleRequestError } from "@/lib/api/handle-request-error";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,30 +26,11 @@ import {
 	type ProfileUpdateValues,
 	profileUpdateSchema
 } from "@/features/profile/schemas/profile.schema";
-import { route } from "@/routes/routes";
 
 interface ProfileUpdateFormProps {
 	user: User;
 	setUser: (user: User | null) => void;
 	router: ReturnType<typeof useRouter>;
-}
-
-function isUnauthorizedError(error: unknown): boolean {
-	return error instanceof ApiError && error.statusCode === 401;
-}
-
-function handleRequestError(
-	error: unknown,
-	router: ReturnType<typeof useRouter>,
-	fallback: string
-) {
-	if (isUnauthorizedError(error)) {
-		toast.error("Please sign in again");
-		router.replace(route.protected.login);
-		return;
-	}
-
-	toast.error(error instanceof ApiError ? error.message : fallback);
 }
 
 export function ProfileUpdateForm({ user, setUser, router }: ProfileUpdateFormProps) {
@@ -151,7 +133,7 @@ export function ProfileUpdateForm({ user, setUser, router }: ProfileUpdateFormPr
 					setUser(latestUser);
 					handleClearSelectedImage();
 				} catch (error) {
-					if (isUnauthorizedError(error)) {
+					if (error instanceof ApiError && error.statusCode === 401) {
 						handleRequestError(error, router, "Failed to upload profile image");
 						return;
 					}

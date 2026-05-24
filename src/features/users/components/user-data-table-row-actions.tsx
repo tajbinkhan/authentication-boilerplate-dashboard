@@ -11,34 +11,8 @@ import {
 	UserEdit01Icon
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import { toast } from "sonner";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogMedia,
-	AlertDialogTitle
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle
-} from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -46,171 +20,21 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Field, FieldLabel } from "@/components/ui/field";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from "@/components/ui/select";
-import {
-	useDeleteUserMutation,
-	useResetUserTwoFactorMutation,
-	useRevokeUserSessionsMutation,
-	useUpdateUserMutation,
-	useUpdateUserRoleMutation
-} from "@/features/users/actions/users.mutations";
 import { UserDetailsDialog } from "@/features/users/components/user-details-dialog";
-import { UserFormFields } from "@/features/users/components/user-form-fields";
-import {
-	CreateUserFormValues,
-	editUserFormSchema
-} from "@/features/users/schemas/user-form.schema";
-import type { ManagedUser, UserRole } from "@/features/users/types/users.types";
-import {
-	canManageUser,
-	formatRevokedUserSessionsCount,
-	formatUserRole,
-	getAssignableRoles
-} from "@/features/users/utils/user-format";
-import useAuth from "@/hooks/use-auth";
-import { ApiError } from "@/lib/api/errors";
-import { route } from "@/routes/routes";
+import { UserDeleteDialog } from "@/features/users/components/user-delete-dialog";
+import { UserEditDialog } from "@/features/users/components/user-edit-dialog";
+import { UserResetTwoFactorDialog } from "@/features/users/components/user-reset-two-factor-dialog";
+import { UserRevokeSessionsDialog } from "@/features/users/components/user-revoke-sessions-dialog";
+import { UserRoleDialog } from "@/features/users/components/user-role-dialog";
+import { useUserActions } from "@/features/users/hooks/use-user-actions";
+import type { ManagedUser } from "@/features/users/types/users.types";
 
 interface UserDataTableRowActionsProps {
 	user: ManagedUser;
 }
 
 export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) {
-	const router = useRouter();
-	const { user: currentUser } = useAuth();
-	const updateUserMutation = useUpdateUserMutation();
-	const updateUserRoleMutation = useUpdateUserRoleMutation();
-	const deleteUserMutation = useDeleteUserMutation();
-	const revokeUserSessionsMutation = useRevokeUserSessionsMutation();
-	const resetUserTwoFactorMutation = useResetUserTwoFactorMutation();
-	const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-	const [editDialogOpen, setEditDialogOpen] = useState(false);
-	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
-	const [resetTwoFactorDialogOpen, setResetTwoFactorDialogOpen] = useState(false);
-	const [nextRole, setNextRole] = useState<UserRole>(user.role);
-
-	const manageable = canManageUser(currentUser, user);
-	const assignableRoles = useMemo(() => getAssignableRoles(currentUser), [currentUser]);
-	const canSubmitRole = manageable && nextRole !== user.role && !updateUserRoleMutation.isPending;
-
-	const editForm = useForm<CreateUserFormValues>({
-		resolver: zodResolver(editUserFormSchema),
-		defaultValues: createEditValues(user)
-	});
-
-	const handleUpdateUser = (values: CreateUserFormValues) => {
-		updateUserMutation.mutate(
-			{
-				id: user.id,
-				name: emptyToNull(values.name),
-				email: values.email.trim().toLowerCase(),
-				phone: emptyToNull(values.phone),
-				emailVerified: values.emailVerified,
-				isApproved: values.isApproved
-			},
-			{
-				onSuccess: () => {
-					toast.success("User updated");
-					setEditDialogOpen(false);
-				},
-				onError: error => {
-					handleRequestError(error, router, "Failed to update user");
-				}
-			}
-		);
-	};
-
-	const handleToggleApproval = (approved: boolean) => {
-		updateUserMutation.mutate(
-			{
-				id: user.id,
-				isApproved: approved
-			},
-			{
-				onSuccess: () => {
-					toast.success(approved ? "User approved" : "User approval revoked");
-				},
-				onError: error => {
-					handleRequestError(
-						error,
-						router,
-						approved ? "Failed to approve user" : "Failed to revoke approval"
-					);
-				}
-			}
-		);
-	};
-
-	const handleUpdateRole = () => {
-		updateUserRoleMutation.mutate(
-			{ id: user.id, role: nextRole },
-			{
-				onSuccess: () => {
-					toast.success("User role updated");
-					setRoleDialogOpen(false);
-				},
-				onError: error => {
-					handleRequestError(error, router, "Failed to update user role");
-				}
-			}
-		);
-	};
-
-	const handleRevokeSessions = () => {
-		revokeUserSessionsMutation.mutate(
-			{ id: user.id },
-			{
-				onSuccess: result => {
-					toast.success(formatRevokedUserSessionsCount(result.revokedCount));
-					setRevokeDialogOpen(false);
-				},
-				onError: error => {
-					handleRequestError(error, router, "Failed to revoke user sessions");
-				}
-			}
-		);
-	};
-
-	const handleDeleteUser = () => {
-		deleteUserMutation.mutate(
-			{ id: user.id },
-			{
-				onSuccess: () => {
-					toast.success("User deleted");
-					setDeleteDialogOpen(false);
-				},
-				onError: error => {
-					handleRequestError(error, router, "Failed to delete user");
-				}
-			}
-		);
-	};
-
-	const handleResetTwoFactor = () => {
-		resetUserTwoFactorMutation.mutate(
-			{ id: user.id },
-			{
-				onSuccess: result => {
-					toast.success(
-						`Two-factor reset. ${formatRevokedUserSessionsCount(result.revokedCount)}.`
-					);
-					setResetTwoFactorDialogOpen(false);
-				},
-				onError: error => {
-					handleRequestError(error, router, "Failed to reset two-factor authentication");
-				}
-			}
-		);
-	};
+	const actions = useUserActions(user);
 
 	return (
 		<>
@@ -227,10 +51,10 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuItem
-						disabled={!manageable}
+						disabled={!actions.manageable}
 						onSelect={event => {
 							event.preventDefault();
-							setDetailsDialogOpen(true);
+							actions.setDetailsDialogOpen(true);
 						}}
 					>
 						<HugeiconsIcon icon={EyeIcon} />
@@ -238,43 +62,43 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
-						disabled={!manageable}
+						disabled={!actions.manageable}
 						onSelect={event => {
 							event.preventDefault();
-							editForm.reset(createEditValues(user));
-							setEditDialogOpen(true);
+							actions.resetEditForm();
+							actions.setEditDialogOpen(true);
 						}}
 					>
 						<HugeiconsIcon icon={UserEdit01Icon} />
 						Edit user
 					</DropdownMenuItem>
 					<DropdownMenuItem
-						disabled={!manageable}
+						disabled={!actions.manageable}
 						onSelect={event => {
 							event.preventDefault();
-							setNextRole(user.role);
-							setRoleDialogOpen(true);
+							actions.setNextRole(user.role);
+							actions.setRoleDialogOpen(true);
 						}}
 					>
 						<HugeiconsIcon icon={UserEdit01Icon} />
 						Change role
 					</DropdownMenuItem>
-					{manageable && !user.isApproved && (
+					{actions.manageable && !user.isApproved && (
 						<DropdownMenuItem
 							onSelect={event => {
 								event.preventDefault();
-								handleToggleApproval(true);
+								actions.handleToggleApproval(true);
 							}}
 						>
 							<HugeiconsIcon icon={Tick02Icon} />
 							Approve user
 						</DropdownMenuItem>
 					)}
-					{manageable && user.isApproved && (
+					{actions.manageable && user.isApproved && (
 						<DropdownMenuItem
 							onSelect={event => {
 								event.preventDefault();
-								handleToggleApproval(false);
+								actions.handleToggleApproval(false);
 							}}
 						>
 							<HugeiconsIcon icon={ShieldBanIcon} />
@@ -284,10 +108,10 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						variant="destructive"
-						disabled={!manageable || !user.is2faEnabled}
+						disabled={!actions.manageable || !user.is2faEnabled}
 						onSelect={event => {
 							event.preventDefault();
-							setResetTwoFactorDialogOpen(true);
+							actions.setResetTwoFactorDialogOpen(true);
 						}}
 					>
 						<HugeiconsIcon icon={LockKeyIcon} />
@@ -295,10 +119,10 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						variant="destructive"
-						disabled={!manageable || user.activeSessionCount === 0}
+						disabled={!actions.manageable || user.activeSessionCount === 0}
 						onSelect={event => {
 							event.preventDefault();
-							setRevokeDialogOpen(true);
+							actions.setRevokeDialogOpen(true);
 						}}
 					>
 						<HugeiconsIcon icon={ComputerRemoveIcon} />
@@ -306,10 +130,10 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						variant="destructive"
-						disabled={!manageable}
+						disabled={!actions.manageable}
 						onSelect={event => {
 							event.preventDefault();
-							setDeleteDialogOpen(true);
+							actions.setDeleteDialogOpen(true);
 						}}
 					>
 						<HugeiconsIcon icon={Delete02Icon} />
@@ -320,175 +144,15 @@ export function UserDataTableRowActions({ user }: UserDataTableRowActionsProps) 
 
 			<UserDetailsDialog
 				user={user}
-				open={detailsDialogOpen}
-				onOpenChange={setDetailsDialogOpen}
+				open={actions.detailsDialogOpen}
+				onOpenChange={actions.setDetailsDialogOpen}
 			/>
 
-			<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-				<DialogContent className="sm:max-w-2xl">
-					<FormProvider {...editForm}>
-						<form onSubmit={editForm.handleSubmit(handleUpdateUser)} className="grid gap-6">
-							<DialogHeader>
-								<DialogTitle>Edit user</DialogTitle>
-								<DialogDescription>{user.email}</DialogDescription>
-							</DialogHeader>
-							<UserFormFields
-								idPrefix={`edit-user-${user.id}`}
-								disabled={updateUserMutation.isPending}
-							/>
-							<DialogFooter>
-								<DialogClose asChild>
-									<Button type="button" variant="outline">
-										Cancel
-									</Button>
-								</DialogClose>
-								<Button type="submit" disabled={updateUserMutation.isPending}>
-									{updateUserMutation.isPending ? "Saving" : "Save changes"}
-								</Button>
-							</DialogFooter>
-						</form>
-					</FormProvider>
-				</DialogContent>
-			</Dialog>
-
-			<Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Change user role</DialogTitle>
-						<DialogDescription>{user.email}</DialogDescription>
-					</DialogHeader>
-					<Field>
-						<FieldLabel htmlFor={`user-role-${user.id}`}>Role</FieldLabel>
-						<Select value={nextRole} onValueChange={value => setNextRole(value as UserRole)}>
-							<SelectTrigger id={`user-role-${user.id}`} className="w-full">
-								<SelectValue placeholder="Select role" />
-							</SelectTrigger>
-							<SelectContent>
-								{assignableRoles.map(role => (
-									<SelectItem key={role} value={role}>
-										{formatUserRole(role)}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					</Field>
-					<DialogFooter>
-						<DialogClose asChild>
-							<Button type="button" variant="outline">
-								Cancel
-							</Button>
-						</DialogClose>
-						<Button type="button" onClick={handleUpdateRole} disabled={!canSubmitRole}>
-							{updateUserRoleMutation.isPending ? "Saving" : "Save role"}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
-
-			<AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogMedia>
-							<HugeiconsIcon icon={ShieldBanIcon} />
-						</AlertDialogMedia>
-						<AlertDialogTitle>Revoke user sessions?</AlertDialogTitle>
-						<AlertDialogDescription>
-							This will sign out {user.email} from {user.activeSessionCount} active session
-							{user.activeSessionCount === 1 ? "" : "s"}.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction
-							variant="destructive"
-							onClick={handleRevokeSessions}
-							disabled={revokeUserSessionsMutation.isPending}
-						>
-							{revokeUserSessionsMutation.isPending ? "Revoking" : "Revoke sessions"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-
-			<AlertDialog open={resetTwoFactorDialogOpen} onOpenChange={setResetTwoFactorDialogOpen}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogMedia>
-							<HugeiconsIcon icon={LockKeyIcon} />
-						</AlertDialogMedia>
-						<AlertDialogTitle>Reset user 2FA?</AlertDialogTitle>
-						<AlertDialogDescription>
-							This disables two-factor authentication for {user.email} and revokes all of their
-							sessions.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction
-							variant="destructive"
-							onClick={handleResetTwoFactor}
-							disabled={resetUserTwoFactorMutation.isPending}
-						>
-							{resetUserTwoFactorMutation.isPending ? "Resetting" : "Reset 2FA"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
-
-			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogMedia>
-							<HugeiconsIcon icon={Delete02Icon} />
-						</AlertDialogMedia>
-						<AlertDialogTitle>Delete user?</AlertDialogTitle>
-						<AlertDialogDescription>
-							This permanently deletes {user.email}, including linked sessions and login accounts.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
-						<AlertDialogAction
-							variant="destructive"
-							onClick={handleDeleteUser}
-							disabled={deleteUserMutation.isPending}
-						>
-							{deleteUserMutation.isPending ? "Deleting" : "Delete user"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+			<UserEditDialog user={user} actions={actions} />
+			<UserRoleDialog user={user} actions={actions} />
+			<UserRevokeSessionsDialog user={user} actions={actions} />
+			<UserResetTwoFactorDialog user={user} actions={actions} />
+			<UserDeleteDialog user={user} actions={actions} />
 		</>
 	);
-}
-
-function createEditValues(user: ManagedUser): CreateUserFormValues {
-	return {
-		name: user.name ?? "",
-		email: user.email,
-		password: "",
-		phone: user.phone ?? "",
-		role: user.role,
-		emailVerified: user.emailVerified,
-		isApproved: user.isApproved
-	};
-}
-
-function emptyToNull(value: string): string | null {
-	const trimmed = value.trim();
-	return trimmed || null;
-}
-
-function handleRequestError(
-	error: unknown,
-	router: ReturnType<typeof useRouter>,
-	fallback: string
-) {
-	if (error instanceof ApiError && error.statusCode === 401) {
-		toast.error("Please sign in again");
-		router.replace(route.protected.login);
-		return;
-	}
-
-	toast.error(error instanceof ApiError ? error.message : fallback);
 }

@@ -14,7 +14,7 @@ import { Field } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
 import { DataTableSingleSelectFacetedFilter } from "@/components/common/table/data-table-single-select-faceted-filter";
-import { useUserList } from "@/features/users/context/user-list-context";
+import { useUserList } from "@/features/users/hooks/use-user-list";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 

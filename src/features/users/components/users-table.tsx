@@ -4,7 +4,7 @@ import { useMemo } from "react";
 
 import { DataTable } from "@/components/common/table/data-table";
 
-import { useUserList } from "@/features/users/context/user-list-context";
+import { useUserList } from "@/features/users/hooks/use-user-list";
 
 import { createUserColumns } from "./users-data-columns";
 import { UsersDataTableToolbar } from "./users-data-table-toolbar";

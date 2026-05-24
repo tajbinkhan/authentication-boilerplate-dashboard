@@ -6,7 +6,7 @@ import { DataTable } from "@/components/common/table/data-table";
 import type { Table as TableInstance } from "@tanstack/react-table";
 
 import { useRevokeOtherSessionsMutation } from "@/features/sessions/actions/sessions.mutations";
-import { useSessionList } from "@/features/sessions/context/session-list-context";
+import { useSessionList } from "@/features/sessions/hooks/use-session-list";
 import type { Session } from "@/features/sessions/types/sessions.types";
 import { formatRevokedCount } from "@/features/sessions/utils/session-format";
 import { ApiError } from "@/lib/api/errors";

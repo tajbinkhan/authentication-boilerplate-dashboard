@@ -26,8 +26,7 @@ import {
 } from "@/features/users/schemas/user-form.schema";
 import { getAssignableRoles, getDefaultAssignableRole } from "@/features/users/utils/user-format";
 import useAuth from "@/hooks/use-auth";
-import { ApiError } from "@/lib/api/errors";
-import { route } from "@/routes/routes";
+import { handleRequestError } from "@/lib/api/handle-request-error";
 
 export function CreateUserDialog() {
 	const router = useRouter();
@@ -133,18 +132,4 @@ function createInitialValues(currentUser: User | null | undefined): CreateUserFo
 function emptyToNull(value: string): string | null {
 	const trimmed = value.trim();
 	return trimmed || null;
-}
-
-function handleRequestError(
-	error: unknown,
-	router: ReturnType<typeof useRouter>,
-	fallback: string
-) {
-	if (error instanceof ApiError && error.statusCode === 401) {
-		toast.error("Please sign in again");
-		router.replace(route.protected.login);
-		return;
-	}
-
-	toast.error(error instanceof ApiError ? error.message : fallback);
 }

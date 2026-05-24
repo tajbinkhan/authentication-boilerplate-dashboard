@@ -11,7 +11,7 @@ import { DataTableViewOptions } from "@/components/common/table/data-table-view-
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { useAuditLogList } from "@/features/audit-logs/context/audit-log-list-context";
+import { useAuditLogList } from "@/features/audit-logs/hooks/use-audit-log-list";
 import {
 	auditLogActionValues,
 	auditLogTargetTypeValues

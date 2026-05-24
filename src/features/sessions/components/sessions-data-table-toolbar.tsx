@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 
-import { useSessionList } from "@/features/sessions/context/session-list-context";
+import { useSessionList } from "@/features/sessions/hooks/use-session-list";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 interface SessionsDataTableToolbarProps<TData> {

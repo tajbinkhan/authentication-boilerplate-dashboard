@@ -4,15 +4,14 @@ import { Audit01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuditLogErrorAlert } from "@/features/audit-logs/components/audit-log-error-alert";
 import {
 	AuditLogListProvider,
 	useAuditLogList
-} from "@/features/audit-logs/context/audit-log-list-context";
-import { ApiError } from "@/lib/api/errors";
+} from "@/features/audit-logs/hooks/use-audit-log-list";
+import { handleRequestError } from "@/lib/api/handle-request-error";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
@@ -69,23 +68,5 @@ function AuditLogsPageContent() {
 			</div>
 		</>
 	);
-}
-
-function handleRequestError(
-	error: unknown,
-	router: ReturnType<typeof useRouter>,
-	fallback: string
-) {
-	if (error instanceof ApiError && error.statusCode === 401) {
-		toast.error("Please sign in again");
-		router.replace(route.protected.login);
-		return;
-	}
-
-	if (error instanceof ApiError && error.statusCode === 403) {
-		return;
-	}
-
-	toast.error(error instanceof ApiError ? error.message : fallback);
 }
 

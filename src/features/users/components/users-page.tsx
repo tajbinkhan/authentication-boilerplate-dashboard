@@ -2,13 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateUserDialog } from "@/features/users/components/create-user-dialog";
 import { UserErrorAlert } from "@/features/users/components/user-error-alert";
-import { UserListProvider, useUserList } from "@/features/users/context/user-list-context";
-import { ApiError } from "@/lib/api/errors";
+import { UserListProvider, useUserList } from "@/features/users/hooks/use-user-list";
+import { handleRequestError } from "@/lib/api/handle-request-error";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
@@ -68,19 +67,5 @@ function UsersPageContent() {
 			</div>
 		</>
 	);
-}
-
-function handleRequestError(
-	error: unknown,
-	router: ReturnType<typeof useRouter>,
-	fallback: string
-) {
-	if (error instanceof ApiError && error.statusCode === 401) {
-		toast.error("Please sign in again");
-		router.replace(route.protected.login);
-		return;
-	}
-
-	toast.error(error instanceof ApiError ? error.message : fallback);
 }
 

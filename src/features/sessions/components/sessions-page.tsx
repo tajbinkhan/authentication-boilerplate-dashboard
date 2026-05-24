@@ -2,16 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { toast } from "sonner";
 
-import { ApiError } from "@/lib/api/errors";
+import { handleRequestError } from "@/lib/api/handle-request-error";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
 import {
 	SessionListProvider,
 	useSessionList
-} from "@/features/sessions/context/session-list-context";
+} from "@/features/sessions/hooks/use-session-list";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SessionErrorAlert } from "@/features/sessions/components/session-error-alert";
@@ -68,18 +67,4 @@ function SessionsPageContent() {
 			</div>
 		</>
 	);
-}
-
-function handleRequestError(
-	error: unknown,
-	router: ReturnType<typeof useRouter>,
-	fallback: string
-) {
-	if (error instanceof ApiError && error.statusCode === 401) {
-		toast.error("Please sign in again");
-		router.replace(route.protected.login);
-		return;
-	}
-
-	toast.error(error instanceof ApiError ? error.message : fallback);
 }

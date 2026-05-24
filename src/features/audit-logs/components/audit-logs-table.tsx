@@ -4,7 +4,7 @@ import { useMemo } from "react";
 
 import { DataTable } from "@/components/common/table/data-table";
 import { AuditLogDetails } from "@/features/audit-logs/components/audit-log-details";
-import { useAuditLogList } from "@/features/audit-logs/context/audit-log-list-context";
+import { useAuditLogList } from "@/features/audit-logs/hooks/use-audit-log-list";
 
 import { createAuditLogColumns } from "./audit-logs-data-columns";
 import { AuditLogsDataTableToolbar } from "./audit-logs-data-table-toolbar";
