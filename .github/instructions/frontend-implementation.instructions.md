@@ -29,6 +29,12 @@ Apply these rules when creating or modifying frontend implementation files.
   behavior.
 - Move reusable UI, data adapters, mappers, hooks, and validation into feature or shared modules
   following local patterns.
+- All business logic — including data fetching, state management, data transformations, API calls,
+  and derived computations — must live in hooks under the feature's `hooks/` folder. Components
+  should only consume hooks for data and behavior; they must not contain business logic directly.
+- Break large feature components into smaller, focused components placed under the feature's
+  `components/` folder. Each component should have a single responsibility and be small enough to
+  read and understand without scrolling. This keeps larger features maintainable and testable.
 - Respect server/client boundaries and do not import server-only modules into browser code.
 - Keep public props, API adapter returns, and exported functions typed when TypeScript is available.
 
