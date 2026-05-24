@@ -2,11 +2,12 @@
 
 import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from "axios";
 
-import { apiRoute } from "@/routes/routes";
+import { apiRoute, route } from "@/routes/routes";
 
 // Cache for CSRF token
 let csrfTokenCache: string | null = null;
 let isFetchingToken = false; // Prevent concurrent token fetches
+let isRedirecting = false; // Prevent multiple concurrent 401 redirects
 
 const axiosClientApi = axios.create({
 	baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -71,6 +72,19 @@ axiosClientApi.interceptors.request.use(
 axiosClientApi.interceptors.response.use(
 	response => response,
 	async (error: AxiosError) => {
+		// Handle 401 Unauthorized — session expired or invalid token
+		if (error.response?.status === 401 && !isRedirecting) {
+			isRedirecting = true;
+			// Clear CSRF cache since session is invalid
+			csrfTokenCache = null;
+			// Redirect to login with current page as redirect target
+			const currentPath = window.location.pathname + window.location.search;
+			const loginUrl = `${route.protected.login}?redirect=${encodeURIComponent(currentPath)}`;
+			window.location.replace(loginUrl);
+			return Promise.reject(error);
+		}
+
+		// Handle 403 Forbidden — CSRF token invalid, try to refresh
 		if (error.response?.status === 403) {
 			console.log("CSRF token invalid or expired. Refreshing token...");
 			await fetchAndCacheCSRFToken(); // Refresh token

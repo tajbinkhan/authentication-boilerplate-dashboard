@@ -6,6 +6,36 @@ import { apiRoute } from "@/routes/routes";
 
 const AUTH_USER_HEADER = "x-auth-user";
 
+/**
+ * Fetches the current user from the API using a raw cookie string.
+ * Used by the root layout with unstable_cache to avoid per-navigation API calls.
+ */
+export async function fetchUserFromApi(cookieString: string): Promise<User | null> {
+	if (!process.env.NEXT_PUBLIC_API_URL) {
+		return null;
+	}
+
+	try {
+		const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${apiRoute.me}`, {
+			method: "GET",
+			headers: {
+				accept: "application/json",
+				...(cookieString ? { cookie: cookieString } : {})
+			},
+			cache: "no-store"
+		});
+
+		if (!response.ok) {
+			return null;
+		}
+
+		const userData = (await response.json()) as ApiResponse<User>;
+		return userData.data;
+	} catch {
+		return null;
+	}
+}
+
 export async function fetchAuth(): Promise<User | null | undefined> {
 	if (!process.env.NEXT_PUBLIC_API_URL) {
 		return null;

@@ -1,28 +1,15 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import type { ApiErrorPayload } from "@/lib/api/errors";
-import { DEFAULT_LOGIN_REDIRECT, apiRoute, route } from "@/routes/routes";
+import { DEFAULT_LOGIN_REDIRECT, route } from "@/routes/routes";
 
-const AUTH_USER_HEADER = "x-auth-user";
+const AUTH_COOKIE_NAME = "access-token";
+const REQUIRES_2FA_COOKIE = "requires-2fa";
 const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
-const ACCESS_TOKEN_COOKIE = "access-token";
 
 const PUBLIC_ROUTES = Object.values(route.public) as string[];
 const PRIVATE_ROUTES = Object.values(route.private) as string[];
 const PROTECTED_ROUTES = Object.values(route.protected) as string[];
-
-const dashboardAccessRestrictionReasons = new Set([
-	"account_pending_approval",
-	"dashboard_role_not_allowed"
-]);
-
-type DashboardAccessRestriction = { reason: string; message: string };
-
-type AuthState =
-	| { status: "authenticated"; user: User }
-	| { status: "requires_2fa" }
-	| { status: "unauthenticated"; restriction?: DashboardAccessRestriction };
 
 function isRouteMatch(pathname: string, routePath: string): boolean {
 	if (routePath === route.private.dashboard) {
@@ -59,73 +46,6 @@ function resolvePostLoginRedirect(request: NextRequest): URL {
 	);
 }
 
-function createNextResponseWithUser(request: NextRequest, user: User) {
-	const requestHeaders = new Headers(request.headers);
-	requestHeaders.set(
-		AUTH_USER_HEADER,
-		Buffer.from(JSON.stringify(user), "utf8").toString("base64url")
-	);
-
-	return NextResponse.next({
-		request: {
-			headers: requestHeaders
-		}
-	});
-}
-
-function getDashboardAccessRestriction(
-	payload: ApiErrorPayload | null
-): DashboardAccessRestriction | null {
-	if (!payload) return null;
-
-	const reason = payload.meta?.reason;
-
-	if (typeof reason !== "string") return null;
-	if (!dashboardAccessRestrictionReasons.has(reason)) return null;
-
-	return { reason, message: payload.message };
-}
-
-async function getAuthState(request: NextRequest): Promise<AuthState> {
-	if (!process.env.NEXT_PUBLIC_API_URL) {
-		return { status: "unauthenticated" };
-	}
-
-	try {
-		const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${apiRoute.me}`, {
-			method: "GET",
-			headers: {
-				accept: "application/json",
-				authorization: request.headers.get("authorization") ?? "",
-				cookie: request.headers.get("cookie") ?? ""
-			},
-			cache: "no-store"
-		});
-
-		if (!response.ok) {
-			const payload = (await response.json().catch(() => null)) as
-				| ApiErrorPayload
-				| null;
-
-			if (response.status === 401 && payload?.code === "two_factor_required") {
-				return { status: "requires_2fa" };
-			}
-
-			const restriction = getDashboardAccessRestriction(payload);
-			if (restriction) return { status: "unauthenticated", restriction };
-
-			return { status: "unauthenticated" };
-		}
-
-		const payload = (await response.json()) as ApiResponse<User>;
-		return payload.data
-			? { status: "authenticated", user: payload.data }
-			: { status: "unauthenticated" };
-	} catch {
-		return { status: "unauthenticated" };
-	}
-}
-
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 
@@ -134,51 +54,59 @@ export async function proxy(request: NextRequest) {
 	const isProtectedRoute = matchesAnyRoute(pathname, PROTECTED_ROUTES);
 	const isTwoFactorVerifyRoute = isRouteMatch(pathname, route.protected.twoFactorVerify);
 
+	// Public routes bypass auth checks entirely
 	if (isPublicRoute) {
 		return NextResponse.next();
 	}
 
+	// Unknown routes (e.g. _next, static files) pass through
 	if (!isPrivateRoute && !isProtectedRoute) {
 		return NextResponse.next();
 	}
 
-	const authState = await getAuthState(request);
+	const hasAuthCookie = request.cookies.has(AUTH_COOKIE_NAME);
+	const requires2fa = request.cookies.has(REQUIRES_2FA_COOKIE);
 
-	if (authState.status === "unauthenticated" && isPrivateRoute) {
-		const loginUrl = new URL(route.protected.login, request.url);
-		loginUrl.searchParams.set("redirect", request.nextUrl.href);
-		if (authState.restriction) {
-			loginUrl.searchParams.set("error", authState.restriction.reason);
-			loginUrl.searchParams.set("message", authState.restriction.message);
+	// No auth cookie → unauthenticated
+	if (!hasAuthCookie) {
+		if (isPrivateRoute) {
+			const loginUrl = new URL(route.protected.login, request.url);
+			loginUrl.searchParams.set("redirect", request.nextUrl.href);
+
+			// Forward error params if present (e.g. from access restriction)
+			const error = request.nextUrl.searchParams.get("error");
+			const message = request.nextUrl.searchParams.get("message");
+			if (error) loginUrl.searchParams.set("error", error);
+			if (message) loginUrl.searchParams.set("message", message);
+
+			return NextResponse.redirect(loginUrl);
 		}
 
-		const response = NextResponse.redirect(loginUrl);
-		if (authState.restriction) response.cookies.delete(ACCESS_TOKEN_COOKIE);
-
-		return response;
-	}
-
-	if (authState.status === "requires_2fa" && !isTwoFactorVerifyRoute) {
-		const verifyUrl = new URL(route.protected.twoFactorVerify, request.url);
-		verifyUrl.searchParams.set("redirect", request.nextUrl.href);
-
-		return NextResponse.redirect(verifyUrl);
-	}
-
-	if (authState.status === "requires_2fa" && isTwoFactorVerifyRoute) {
+		// Not on a protected route either — just pass through
 		return NextResponse.next();
 	}
 
-	if (authState.status === "authenticated" && isProtectedRoute) {
+	// Has auth cookie but needs 2FA
+	if (requires2fa) {
+		if (!isTwoFactorVerifyRoute) {
+			const verifyUrl = new URL(route.protected.twoFactorVerify, request.url);
+			verifyUrl.searchParams.set("redirect", request.nextUrl.href);
+			return NextResponse.redirect(verifyUrl);
+		}
+
+		// On 2FA verify route — let through
+		return NextResponse.next();
+	}
+
+	// Authenticated user trying to access login/signup → redirect to dashboard
+	if (isProtectedRoute) {
 		const response = NextResponse.redirect(resolvePostLoginRedirect(request));
 		response.cookies.delete(MAGIC_LINK_REDIRECT_COOKIE);
 		return response;
 	}
 
-	if (authState.status === "authenticated") {
-		return createNextResponseWithUser(request, authState.user);
-	}
-
+	// Authenticated user accessing private route — let through
+	// User data will be fetched once by the layout and cached
 	return NextResponse.next();
 }
 

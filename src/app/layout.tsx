@@ -5,10 +5,12 @@ import { AppGoogleOAuthProvider } from "@/providers/google-oauth-provider";
 import { ThemeProvider } from "@/providers/next-themes-provider";
 import QueryProvider from "@/providers/query-provider";
 import { RedirectProvider } from "@/providers/redirect-provider";
-import { getUserFromRequestHeaders } from "@/server/fetch-auth";
+import { fetchUserFromApi } from "@/server/fetch-auth";
 import type { Metadata } from "next";
 import { Figtree, Geist, Geist_Mono } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { unstable_cache } from "next/cache";
+import { cookies } from "next/headers";
 
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -33,8 +35,20 @@ export const metadata: Metadata = {
 	description: "A boilerplate dashboard built with Next.js, React, and TypeScript."
 };
 
+// Cache user fetch per cookie string so repeated navigations
+// within the same session hit the cache instead of the API
+const getCachedUser = unstable_cache(
+	async (cookieString: string) => {
+		return fetchUserFromApi(cookieString);
+	},
+	["dashboard-user"],
+	{ revalidate: 60, tags: ["user"] }
+);
+
 export default async function RootLayout({ children }: Readonly<GlobalLayoutProps>) {
-	const user = await getUserFromRequestHeaders();
+	const cookieStore = await cookies();
+	const cookieString = cookieStore.toString();
+	const user = cookieString ? await getCachedUser(cookieString) : null;
 
 	return (
 		<html
