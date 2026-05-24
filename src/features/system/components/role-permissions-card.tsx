@@ -1,104 +1,96 @@
 "use client";
 
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle
-} from "@/components/ui/card";
+import { LockIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { FieldLegend, FieldSet } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
 import type { UserRole } from "@/features/users/types/users.types";
 import { formatUserRole } from "@/features/users/utils/user-format";
+import { cn } from "@/lib/utils";
 
 const ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN", "MANAGER", "USER"];
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-	SUPER_ADMIN:
-		"Super administrator with full, unrestricted access to settings, databases, and configuration.",
-	ADMIN: "Administrators who can manage users, view server stats, and configure settings.",
-	MANAGER: "Managers who have moderate access to views, profiles, and listings.",
-	USER: "Standard users who can access user-level dashboards and update their profiles."
+	SUPER_ADMIN: "Full, unrestricted access to settings, databases, and configuration.",
+	ADMIN: "Manage users, view server stats, and configure settings.",
+	MANAGER: "Moderate access to views, profiles, and listings.",
+	USER: "Standard access to user-level dashboards and profile updates."
 };
 
 interface RolePermissionsCardProps {
 	allowedRoles: UserRole[];
 	onToggleRole: (role: UserRole) => void;
-	hasChanges: boolean;
-	isSaving: boolean;
-	onSave: () => void;
-	onReset: () => void;
 }
 
-export function RolePermissionsCard({
-	allowedRoles,
-	onToggleRole,
-	hasChanges,
-	isSaving,
-	onSave,
-	onReset
-}: RolePermissionsCardProps) {
+export function RolePermissionsCard({ allowedRoles, onToggleRole }: RolePermissionsCardProps) {
 	return (
-		<Card className="border-border/50 overflow-hidden shadow-sm">
-			<CardHeader className="border-border/10 bg-muted/20 border-b">
+		<Card className="border-border/50 pt-0 shadow-sm">
+			<CardHeader className="border-border/10 bg-muted/20 border-b pt-6">
 				<CardTitle className="text-base font-semibold">Dashboard Access Control</CardTitle>
 				<CardDescription>
 					Configure which user roles are allowed to authenticate and access the dashboard.
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="p-6">
-				<div className="grid gap-4">
-					{ROLES.map(role => {
-						const isChecked = allowedRoles.includes(role);
-						const isSuperAdmin = role === "SUPER_ADMIN";
+				<FieldSet>
+					<FieldLegend className="sr-only">Allowed Roles</FieldLegend>
+					<div className="flex flex-col gap-3">
+						{ROLES.map(role => {
+							const isChecked = allowedRoles.includes(role);
+							const isSuperAdmin = role === "SUPER_ADMIN";
 
-						return (
-							<div
-								key={role}
-								onClick={() => onToggleRole(role)}
-								className={cn(
-									"flex cursor-pointer items-center justify-between rounded-xl border p-4 transition-all duration-200",
-									isChecked
-										? "bg-muted/30 border-primary/20"
-										: "border-border/50 hover:bg-muted/10",
-									isSuperAdmin && "cursor-default opacity-75"
-								)}
-							>
-								<div className="flex flex-col gap-0.5">
-									<span className="text-sm font-semibold">{formatUserRole(role)}</span>
-									<span className="text-muted-foreground text-xs">
-										{ROLE_DESCRIPTIONS[role]}
-									</span>
-								</div>
-								<div onClick={e => e.stopPropagation()} className="pl-4">
+							return (
+								<div
+									key={role}
+									className={cn(
+										"flex items-center gap-4 rounded-xl border p-4 transition-all",
+										isChecked
+											? "border-primary/20 bg-muted/30"
+											: "border-border/50 hover:bg-muted/10",
+										isSuperAdmin && "opacity-80"
+									)}
+								>
 									<Checkbox
 										id={`role-${role}`}
 										checked={isChecked}
 										onCheckedChange={() => onToggleRole(role)}
 										disabled={isSuperAdmin}
+										className="mt-1 size-5 shrink-0 self-baseline"
 									/>
+									<div className="flex flex-1 flex-col gap-0.5">
+										<div className="flex items-center justify-between gap-2">
+											<Label
+												htmlFor={`role-${role}`}
+												className={cn(
+													"text-sm font-semibold",
+													isSuperAdmin ? "cursor-default" : "cursor-pointer"
+												)}
+											>
+												{formatUserRole(role)}
+											</Label>
+											{isSuperAdmin && (
+												<span className="text-muted-foreground flex items-center gap-1 text-xs">
+													<HugeiconsIcon icon={LockIcon} data-icon="inline-start" />
+													Always enabled
+												</span>
+											)}
+
+											{isChecked && !isSuperAdmin && (
+												<span className="text-emerald text-xs">Allowed</span>
+											)}
+										</div>
+										<span className="text-muted-foreground text-xs">{ROLE_DESCRIPTIONS[role]}</span>
+									</div>
 								</div>
-							</div>
-						);
-					})}
-				</div>
+							);
+						})}
+					</div>
+				</FieldSet>
 			</CardContent>
-			<CardFooter className="bg-muted/5 border-border/10 flex justify-end gap-3 border-t p-6">
-				<Button
-					type="button"
-					variant="outline"
-					disabled={!hasChanges || isSaving}
-					onClick={onReset}
-				>
-					Reset
-				</Button>
-				<Button type="button" disabled={!hasChanges || isSaving} onClick={onSave}>
-					{isSaving ? "Saving Settings" : "Save Changes"}
-				</Button>
-			</CardFooter>
 		</Card>
 	);
 }
+

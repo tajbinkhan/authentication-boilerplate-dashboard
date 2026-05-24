@@ -1,52 +1,50 @@
 "use client";
 
 import {
-	UserAdd01Icon,
-	UserGroupIcon,
+	CheckCircle,
 	ShieldKeyIcon,
-	Tick02Icon
+	UserAdd01Icon,
+	UserGroupIcon
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { AccessModel } from "@/features/system/types/system.types";
+import { cn } from "@/lib/utils";
 
-const ACCESS_MODELS = [
+const ACCESS_MODELS: {
+	id: AccessModel;
+	title: string;
+	description: string;
+	icon: typeof UserAdd01Icon;
+	badgeLabel: string;
+	badgeClass: string;
+}[] = [
 	{
-		id: "OPEN" as AccessModel,
+		id: "OPEN",
 		title: "Open Registration",
-		description: "Anyone can sign up and gain access to the system immediately.",
+		description: "Anyone can sign up and gain immediate access.",
 		icon: UserAdd01Icon,
-		gradient: "from-emerald-500/10 to-teal-500/10",
-		borderSelected: "border-emerald-500/50 dark:border-emerald-400/50",
-		accentColor: "text-emerald-500"
+		badgeLabel: "Open",
+		badgeClass: "bg-emerald/10 text-emerald dark:bg-emerald/20"
 	},
 	{
-		id: "APPROVAL_BASED" as AccessModel,
-		title: "Approval-Based",
-		description:
-			"Users can register, but an administrator must manually approve their account before they can sign in.",
+		id: "APPROVAL_BASED",
+		title: "Approval-Required",
+		description: "Users can register, but an admin must approve their account first.",
 		icon: UserGroupIcon,
-		gradient: "from-amber-500/10 to-orange-500/10",
-		borderSelected: "border-amber-500/50 dark:border-amber-400/50",
-		accentColor: "text-amber-500"
+		badgeLabel: "Moderated",
+		badgeClass: "bg-amber/10 text-amber dark:bg-amber/20"
 	},
 	{
-		id: "CLOSED" as AccessModel,
-		title: "Closed / Private",
-		description:
-			"Self-registration is disabled. Only pre-created accounts can request a login magic link.",
+		id: "CLOSED",
+		title: "Closed / Invite-Only",
+		description: "Self-registration is disabled. Only pre-created accounts can sign in.",
 		icon: ShieldKeyIcon,
-		gradient: "from-rose-500/10 to-pink-500/10",
-		borderSelected: "border-rose-500/50 dark:border-rose-400/50",
-		accentColor: "text-rose-500"
+		badgeLabel: "Restricted",
+		badgeClass: "bg-rose/10 text-rose dark:bg-rose/20"
 	}
 ];
 
@@ -57,59 +55,68 @@ interface AccessModelCardProps {
 
 export function AccessModelCard({ value, onChange }: AccessModelCardProps) {
 	return (
-		<Card className="border-border/50 overflow-hidden shadow-sm">
-			<CardHeader className="border-border/10 bg-muted/20 border-b">
+		<Card className="border-border/50 pt-0 shadow-sm">
+			<CardHeader className="border-border/10 bg-muted/20 border-b pt-6">
 				<CardTitle className="text-base font-semibold">Access Model</CardTitle>
 				<CardDescription>
 					Control how new users register and sign in to the application.
 				</CardDescription>
 			</CardHeader>
-			<CardContent className="grid gap-4 p-6 sm:grid-cols-3">
-				{ACCESS_MODELS.map(model => {
-					const isSelected = value === model.id;
-					const Icon = model.icon;
+			<CardContent className="p-6">
+				<ToggleGroup
+					type="single"
+					value={value}
+					onValueChange={val => {
+						if (val) onChange(val as AccessModel);
+					}}
+					className="w-full flex-col items-stretch gap-3 rounded-none bg-transparent p-0"
+				>
+					{ACCESS_MODELS.map(model => {
+						const Icon = model.icon;
+						const isSelected = value === model.id;
 
-					return (
-						<button
-							key={model.id}
-							type="button"
-							onClick={() => onChange(model.id)}
-							className={cn(
-								"relative flex flex-col rounded-2xl border p-5 text-left transition-all duration-200 hover:shadow-md focus:outline-none",
-								isSelected
-									? cn("bg-linear-to-br shadow-inner", model.gradient, model.borderSelected)
-									: "border-border/60 hover:border-border"
-							)}
-						>
-							<div className="mb-3 flex w-full items-center justify-between">
-								<div
-									className={cn(
-										"bg-background border-border/20 rounded-xl border p-2 shadow-sm",
-										model.accentColor
-									)}
-								>
-									<HugeiconsIcon icon={Icon} className="size-5" />
-								</div>
-								{isSelected && (
+						return (
+							<ToggleGroupItem
+								key={model.id}
+								value={model.id}
+								className={cn(
+									"flex w-full flex-col items-start gap-2 rounded-xl border p-4 text-left",
+									"data-state=on:border-l-4 data-state=on:border-l-primary data-state=on:bg-primary/10 data-state=on:shadow-sm",
+									"border-border/50 hover:bg-muted/10"
+								)}
+							>
+								<div className="flex w-full items-center gap-3">
 									<div
 										className={cn(
-											"bg-background flex size-5 items-center justify-center rounded-full border shadow-sm",
-											model.accentColor,
-											model.borderSelected
+											"flex size-9 shrink-0 items-center justify-center rounded-lg",
+											isSelected
+												? "bg-primary text-primary-foreground"
+												: "bg-muted text-muted-foreground"
 										)}
 									>
-										<HugeiconsIcon icon={Tick02Icon} className="size-3" />
+										<HugeiconsIcon icon={Icon} />
 									</div>
-								)}
-							</div>
-							<h3 className="mb-1 text-sm font-semibold">{model.title}</h3>
-							<p className="text-muted-foreground text-xs leading-relaxed">
-								{model.description}
-							</p>
-						</button>
-					);
-				})}
+									<div className="flex w-full items-center justify-between gap-2">
+										<div>
+											<span className="text-sm font-semibold">{model.title}</span>
+											<p className="text-muted-foreground text-xs leading-relaxed text-wrap">
+												{model.description}
+											</p>
+										</div>
+										{isSelected && (
+											<Badge variant="default" className={cn("border-0", model.badgeClass)}>
+												<HugeiconsIcon icon={CheckCircle} data-icon="inline-start" />
+												{model.badgeLabel}
+											</Badge>
+										)}
+									</div>
+								</div>
+							</ToggleGroupItem>
+						);
+					})}
+				</ToggleGroup>
 			</CardContent>
 		</Card>
 	);
 }
+
