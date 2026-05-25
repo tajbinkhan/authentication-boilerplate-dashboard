@@ -9,7 +9,8 @@ export const route = {
 		users: "/users",
 		sessions: "/sessions",
 		auditLogs: "/audit-logs",
-		system: "/system"
+		system: "/system",
+		smtpProviders: "/smtp-providers"
 	},
 	protected: {
 		login: "/login",
@@ -46,7 +47,12 @@ export const apiRoute = {
 	systemSettingsPublic: "/system/settings/public",
 	systemSettings: "/system/settings",
 	setPassword: "/auth/password/set",
-	changePassword: "/auth/password/change"
+	changePassword: "/auth/password/change",
+	smtpProviders: "/smtp-providers",
+	smtpProvider: (id: string) => `/smtp-providers/${id}`,
+	smtpProviderTest: (id: string) => `/smtp-providers/${id}/test`,
+	smtpProviderSetDefault: (id: string) => `/smtp-providers/${id}/set-default`,
+	smtpProviderToggle: (id: string) => `/smtp-providers/${id}/toggle`
 } as const;
 
 const DEFAULT_LOGIN_REDIRECT = route.private.dashboard;

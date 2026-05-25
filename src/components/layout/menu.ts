@@ -2,6 +2,7 @@ import {
 	Audit01Icon,
 	ComputerProtectionIcon,
 	DashboardSquare01Icon,
+	Mail01Icon,
 	Settings02Icon,
 	UserGroupIcon,
 	UserIcon
@@ -34,6 +35,12 @@ const navItem: NavItemProps[] = [
 		title: "Users",
 		url: route.private.users,
 		icon: UserGroupIcon,
+		roles: ["ADMIN", "SUPER_ADMIN"]
+	},
+	{
+		title: "SMTP Providers",
+		url: route.private.smtpProviders,
+		icon: Mail01Icon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
 	},
 	{
