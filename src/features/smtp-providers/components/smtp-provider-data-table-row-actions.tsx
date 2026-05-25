@@ -4,6 +4,7 @@ import {
 	Delete02Icon,
 	Edit02Icon,
 	Mail01Icon,
+	MoreVerticalIcon,
 	StarIcon
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -106,8 +107,13 @@ export function SmtpProviderDataTableRowActions({
 		<div className="flex items-center gap-2">
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="sm">
-						Actions
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						aria-label={`Open actions for ${provider.name}`}
+					>
+						<HugeiconsIcon icon={MoreVerticalIcon} />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
@@ -182,3 +188,4 @@ function handleRequestError(
 
 	toast.error(error instanceof ApiError ? error.message : fallback);
 }
+
