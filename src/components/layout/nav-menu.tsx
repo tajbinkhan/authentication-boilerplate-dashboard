@@ -31,6 +31,12 @@ export function NavMenu(props: NavMenuProps) {
 	const pathname = usePathname();
 	const { user } = useAuth();
 
+	const visibleItems = props.items.filter(
+		item => !item.roles?.length || (user && item.roles.includes(user.role))
+	);
+
+	if (visibleItems.length === 0) return null;
+
 	const isActive = (items?: NavItemProps["items"]) => {
 		if (items) {
 			const isActive = items.some(subItem => subItem.url === pathname);
@@ -44,9 +50,7 @@ export function NavMenu(props: NavMenuProps) {
 			<SidebarGroupLabel>{props.label}</SidebarGroupLabel>
 			<SidebarGroupContent className="flex flex-col gap-2">
 				<SidebarMenu>
-					{props.items
-						.filter(item => !item.roles?.length || (user && item.roles.includes(user.role)))
-						.map(item => (
+					{visibleItems.map(item => (
 							<Collapsible key={item.title} asChild defaultOpen={isActive(item.items)}>
 								<SidebarMenuItem>
 									<SidebarMenuButton
