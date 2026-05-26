@@ -3,6 +3,7 @@ import {
 	ComputerProtectionIcon,
 	DashboardSquare01Icon,
 	Mail01Icon,
+	MailSettingIcon,
 	Settings02Icon,
 	UserGroupIcon,
 	UserIcon
@@ -41,6 +42,12 @@ const navItem: NavItemProps[] = [
 		title: "SMTP Providers",
 		url: route.private.smtpProviders,
 		icon: Mail01Icon,
+		roles: ["ADMIN", "SUPER_ADMIN"]
+	},
+	{
+		title: "Email Templates",
+		url: route.private.emailTemplates,
+		icon: MailSettingIcon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
 	},
 	{

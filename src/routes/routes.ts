@@ -11,6 +11,8 @@ export const route = {
 		auditLogs: "/audit-logs",
 		system: "/system",
 		smtpProviders: "/smtp-providers",
+		emailTemplates: "/email-templates",
+		emailTemplateEdit: (publicId: string) => `/email-templates/${publicId}/edit`,
 		emailLogs: "/email-logs"
 	},
 	protected: {
@@ -54,6 +56,8 @@ export const apiRoute = {
 	smtpProviderTest: (id: string) => `/smtp-providers/${id}/test`,
 	smtpProviderSetDefault: (id: string) => `/smtp-providers/${id}/set-default`,
 	smtpProviderToggle: (id: string) => `/smtp-providers/${id}/toggle`,
+	emailTemplates: "/email-templates",
+	emailTemplate: (publicId: string) => `/email-templates/${publicId}`,
 	emailLogs: "/email-logs",
 	emailLog: (logId: string) => `/email-logs/${logId}`,
 	emailLogResend: (logId: string) => `/email-logs/${logId}/resend`
