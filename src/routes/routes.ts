@@ -10,7 +10,8 @@ export const route = {
 		sessions: "/sessions",
 		auditLogs: "/audit-logs",
 		system: "/system",
-		smtpProviders: "/smtp-providers"
+		smtpProviders: "/smtp-providers",
+		emailLogs: "/email-logs"
 	},
 	protected: {
 		login: "/login",
@@ -52,7 +53,10 @@ export const apiRoute = {
 	smtpProvider: (id: string) => `/smtp-providers/${id}`,
 	smtpProviderTest: (id: string) => `/smtp-providers/${id}/test`,
 	smtpProviderSetDefault: (id: string) => `/smtp-providers/${id}/set-default`,
-	smtpProviderToggle: (id: string) => `/smtp-providers/${id}/toggle`
+	smtpProviderToggle: (id: string) => `/smtp-providers/${id}/toggle`,
+	emailLogs: "/email-logs",
+	emailLog: (logId: string) => `/email-logs/${logId}`,
+	emailLogResend: (logId: string) => `/email-logs/${logId}/resend`
 } as const;
 
 const DEFAULT_LOGIN_REDIRECT = route.private.dashboard;

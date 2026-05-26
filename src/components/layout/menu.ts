@@ -44,6 +44,12 @@ const navItem: NavItemProps[] = [
 		roles: ["ADMIN", "SUPER_ADMIN"]
 	},
 	{
+		title: "Email Logs",
+		url: route.private.emailLogs,
+		icon: Mail01Icon,
+		roles: ["ADMIN", "SUPER_ADMIN"]
+	},
+	{
 		title: "Audit Logs",
 		url: route.private.auditLogs,
 		icon: Audit01Icon,
