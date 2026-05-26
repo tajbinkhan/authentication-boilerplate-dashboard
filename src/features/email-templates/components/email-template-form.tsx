@@ -126,7 +126,7 @@ export function EmailTemplateForm({ template, onSuccess, onCancel }: EmailTempla
 				className="flex min-h-0 flex-1 flex-col"
 				noValidate
 			>
-				<div className="min-h-0 flex-1 overflow-y-auto">
+				<div className="min-h-0 flex-1 overflow-y-auto p-2">
 					<FieldGroup className="gap-6">
 						<FormErrorMessage message={errors.root?.message} />
 						<TemplateInputField
