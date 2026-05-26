@@ -49,6 +49,11 @@ export interface AuditLog {
 
 export type AuditLogListResponse = PaginatedData<AuditLog>;
 
+export interface AuditLogFilterOptions {
+	actions: string[];
+	targetTypes: string[];
+}
+
 export interface AuditLogListQuery {
 	page: number;
 	pageSize: number;

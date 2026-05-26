@@ -11,15 +11,9 @@ import { DataTableViewOptions } from "@/components/common/table/data-table-view-
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { useAuditLogFilterOptions } from "@/features/audit-logs/actions/audit-logs.queries";
 import { useAuditLogList } from "@/features/audit-logs/hooks/use-audit-log-list";
-import {
-	auditLogActionValues,
-	auditLogTargetTypeValues
-} from "@/features/audit-logs/types/audit-logs.types";
-import {
-	formatAuditAction,
-	formatAuditTargetType
-} from "@/features/audit-logs/utils/audit-log-format";
+import { formatAuditAction, formatAuditTargetType } from "@/features/audit-logs/utils/audit-log-format";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 interface AuditLogsDataTableToolbarProps<TData> {
@@ -40,25 +34,26 @@ export function AuditLogsDataTableToolbar<TData>({ table }: AuditLogsDataTableTo
 		handleResetAll,
 		handleRefresh
 	} = useAuditLogList();
+	const { data: filterOptions } = useAuditLogFilterOptions();
 	const [actorInput, setActorInput] = useState(actor);
 	const debouncedActor = useDebouncedValue(actorInput, 400);
 
 	const actionFilterOptions = useMemo(
 		() =>
-			auditLogActionValues.map(value => ({
+			(filterOptions?.actions ?? []).map(value => ({
 				label: formatAuditAction(value),
 				value
 			})),
-		[]
+		[filterOptions?.actions]
 	);
 
 	const targetTypeFilterOptions = useMemo(
 		() =>
-			auditLogTargetTypeValues.map(value => ({
+			(filterOptions?.targetTypes ?? []).map(value => ({
 				label: formatAuditTargetType(value),
 				value
 			})),
-		[]
+		[filterOptions?.targetTypes]
 	);
 
 	const hasFilters = Boolean(actor || action || targetType || fromDate || toDate);

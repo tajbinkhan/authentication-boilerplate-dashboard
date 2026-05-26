@@ -113,12 +113,6 @@ export function SmtpProvidersDataTableToolbar<TData>({
 				</div>
 			</div>
 			<div className="flex flex-col gap-2 sm:items-end">
-				<DataTableDateRangeFilter
-					id="smtp-providers-date-range"
-					fromDate={fromDate}
-					toDate={toDate}
-					onChange={handleDateRangeChange}
-				/>
 				<div className="flex flex-wrap items-center gap-2 sm:justify-end">
 					<Button type="button" size="sm" onClick={handleRefresh} disabled={isFetching}>
 						<HugeiconsIcon
@@ -128,6 +122,12 @@ export function SmtpProvidersDataTableToolbar<TData>({
 						/>
 						Refresh
 					</Button>
+					<DataTableDateRangeFilter
+						id="smtp-providers-date-range"
+						fromDate={fromDate}
+						toDate={toDate}
+						onChange={handleDateRangeChange}
+					/>
 					<DataTableViewOptions table={table} />
 				</div>
 			</div>
