@@ -1,7 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft01Icon, Loading03Icon, SaveIcon, VariableIcon } from "@hugeicons/core-free-icons";
+import {
+	ArrowLeft01Icon,
+	Loading03Icon,
+	SaveIcon,
+	VariableIcon,
+	ViewIcon
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useMemo } from "react";
 import { Controller, FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
@@ -132,25 +138,22 @@ export function EmailTemplateForm({ template, onSuccess, onCancel }: EmailTempla
 							disabled={isPending}
 						/>
 
-						<div className="grid gap-5 xl:grid-cols-2">
-							<TemplateTextareaField
-								name="html"
-								id={`template-${template.publicId}-html`}
-								label="HTML Body"
-								rows={16}
-								error={errors.html?.message}
-								disabled={isPending}
-							/>
-							<TemplateTextareaField
-								name="text"
-								id={`template-${template.publicId}-text`}
-								label="Text Body"
-								rows={16}
-								error={errors.text?.message}
-								disabled={isPending}
-								optional
-							/>
-						</div>
+						<HtmlEditorWorkspace
+							html={html}
+							id={`template-${template.publicId}-html`}
+							error={errors.html?.message}
+							disabled={isPending}
+						/>
+
+						<TemplateTextareaField
+							name="text"
+							id={`template-${template.publicId}-text`}
+							label="Text Body"
+							rows={10}
+							error={errors.text?.message}
+							disabled={isPending}
+							optional
+						/>
 
 						<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
 							<ActiveSwitchField id={`template-${template.publicId}-active`} disabled={isPending} />
@@ -230,6 +233,33 @@ function TemplateInputField({ name, id, label, error, disabled, placeholder }: T
 	);
 }
 
+function HtmlEditorWorkspace({
+	html,
+	id,
+	error,
+	disabled
+}: {
+	html: string;
+	id: string;
+	error?: string;
+	disabled: boolean;
+}) {
+	return (
+		<div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.9fr)]">
+			<TemplateTextareaField
+				name="html"
+				id={id}
+				label="HTML Body"
+				rows={18}
+				error={error}
+				disabled={disabled}
+				className="min-h-128"
+			/>
+			<HtmlPreview html={html} />
+		</div>
+	);
+}
+
 function TemplateTextareaField({
 	name,
 	id,
@@ -237,8 +267,9 @@ function TemplateTextareaField({
 	error,
 	disabled,
 	rows,
-	optional = false
-}: TemplateFieldProps & { rows: number; optional?: boolean }) {
+	optional = false,
+	className
+}: TemplateFieldProps & { rows: number; optional?: boolean; className?: string }) {
 	const { register } = useFormContext<EmailTemplateFormValues>();
 
 	return (
@@ -252,13 +283,76 @@ function TemplateTextareaField({
 				{...register(name)}
 				rows={rows}
 				spellCheck={name !== "html"}
-				className="bg-muted/20 min-h-80 resize-y rounded-xl font-mono text-xs leading-relaxed [tab-size:2] shadow-inner"
+				className={`bg-muted/20 min-h-80 resize-y rounded-xl font-mono text-xs leading-relaxed tab-2 shadow-inner ${className ?? ""}`}
 				disabled={disabled}
 				aria-invalid={!!error}
 			/>
 			<FieldError>{error}</FieldError>
 		</Field>
 	);
+}
+
+function HtmlPreview({ html }: { html: string }) {
+	const previewDocument = useMemo(() => buildPreviewDocument(html), [html]);
+	const hasHtml = html.trim().length > 0;
+
+	return (
+		<div className="bg-background flex min-h-128 flex-col overflow-hidden rounded-xl border">
+			<div className="bg-muted/40 flex items-center justify-between gap-3 border-b px-4 py-3">
+				<div className="flex min-w-0 items-center gap-2">
+					<HugeiconsIcon icon={ViewIcon} className="text-muted-foreground size-4" />
+					<p className="text-sm font-medium">HTML Preview</p>
+				</div>
+				<Badge variant="outline">Live</Badge>
+			</div>
+			<div className="relative min-h-0 flex-1 bg-white">
+				{hasHtml ? (
+					<iframe
+						title="HTML email preview"
+						srcDoc={previewDocument}
+						sandbox=""
+						className="h-full min-h-112 w-full bg-white"
+					/>
+				) : (
+					<div className="flex h-full min-h-112 items-center justify-center p-6 text-center">
+						<p className="text-muted-foreground text-sm">HTML preview will appear here.</p>
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+function buildPreviewDocument(html: string): string {
+	if (isCompleteHtmlDocument(html)) {
+		return html;
+	}
+
+	return `<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<style>
+			html,
+			body {
+				margin: 0;
+				min-height: 100%;
+				background: #ffffff;
+			}
+
+			body {
+				padding: 24px;
+				box-sizing: border-box;
+			}
+		</style>
+	</head>
+	<body>${html}</body>
+</html>`;
+}
+
+function isCompleteHtmlDocument(html: string): boolean {
+	return /<!doctype\s+html/i.test(html) || /<html[\s>]/i.test(html);
 }
 
 function ActiveSwitchField({ id, disabled }: { id: string; disabled: boolean }) {
