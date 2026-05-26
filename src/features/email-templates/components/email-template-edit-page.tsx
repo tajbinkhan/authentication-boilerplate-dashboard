@@ -3,55 +3,58 @@
 import { ArrowLeft01Icon, MailSettingIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
+import { handleRequestError } from "@/lib/api/handle-request-error";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { useEmailTemplateQuery } from "@/features/email-templates/actions/email-template.queries";
 import { EmailTemplateForm } from "@/features/email-templates/components/email-template-form";
-import { useEmailTemplatesQuery } from "@/features/email-templates/actions/email-template.queries";
-import { handleRequestError } from "@/lib/api/handle-request-error";
-import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
+import type { EmailTemplate } from "@/features/email-templates/types/email-template.types";
+import { formatEmailTemplateDate } from "@/features/email-templates/utils/email-template-format";
+import { type BreadcrumbItem, SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
 interface EmailTemplateEditPageProps {
-	params: Promise<{ publicId: string }>;
+	publicId: string;
 }
 
-export function EmailTemplateEditPage({ params }: EmailTemplateEditPageProps) {
-	const router = useRouter();
-	const templatesQuery = useEmailTemplatesQuery({ page: 1, pageSize: 100, sort: "createdAt", dir: "desc" });
+const EDIT_TEMPLATE_FALLBACK_LABEL = "Edit Template";
 
-	const template = templatesQuery.data?.rows.find(t => t.publicId === (params as unknown as { publicId: string }).publicId);
+export function EmailTemplateEditPage({ publicId }: EmailTemplateEditPageProps) {
+	const router = useRouter();
+	const templateQuery = useEmailTemplateQuery(publicId);
+
+	const template = templateQuery.data;
+	const breadcrumbItems = useMemo(
+		() => getBreadcrumbItems(template?.key ?? EDIT_TEMPLATE_FALLBACK_LABEL),
+		[template?.key]
+	);
 
 	useEffect(() => {
-		if (templatesQuery.error) {
-			handleRequestError(templatesQuery.error, router, "Failed to load email templates");
+		if (templateQuery.error) {
+			handleRequestError(templateQuery.error, router, "Failed to load email template");
 		}
-	}, [templatesQuery.error, router]);
+	}, [templateQuery.error, router]);
+
+	const navigateToTemplates = useCallback(() => {
+		router.push(route.private.emailTemplates);
+	}, [router]);
 
 	const handleSuccess = useCallback(() => {
 		toast.success("Template updated");
-		router.push(route.private.emailTemplates);
-	}, [router]);
+		navigateToTemplates();
+	}, [navigateToTemplates]);
 
-	const handleCancel = useCallback(() => {
-		router.push(route.private.emailTemplates);
-	}, [router]);
-
-	const breadcrumbItems = [
-		{ name: "Dashboard", href: route.private.dashboard },
-		{ name: "Email Templates", href: route.private.emailTemplates },
-		{ name: template ? template.key : "Edit Template", isCurrent: true }
-	];
-
-	if (templatesQuery.isLoading) {
+	if (templateQuery.isLoading) {
 		return (
 			<>
 				<SetBreadcrumb items={breadcrumbItems} />
-				<div className="flex items-center justify-center py-24">
-					<p className="text-muted-foreground text-sm">Loading template...</p>
-				</div>
+				<PageMessage message="Loading template..." />
 			</>
 		);
 	}
@@ -60,13 +63,7 @@ export function EmailTemplateEditPage({ params }: EmailTemplateEditPageProps) {
 		return (
 			<>
 				<SetBreadcrumb items={breadcrumbItems} />
-				<div className="flex flex-col items-center justify-center gap-4 py-24">
-					<p className="text-muted-foreground text-sm">Template not found.</p>
-					<Button type="button" variant="outline" onClick={() => router.push(route.private.emailTemplates)}>
-						<HugeiconsIcon icon={ArrowLeft01Icon} data-icon="inline-start" />
-						Back to Templates
-					</Button>
-				</div>
+				<TemplateNotFound onBack={navigateToTemplates} />
 			</>
 		);
 	}
@@ -75,35 +72,91 @@ export function EmailTemplateEditPage({ params }: EmailTemplateEditPageProps) {
 		<>
 			<SetBreadcrumb items={breadcrumbItems} />
 			<div className="flex flex-col gap-6">
-				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-					<div>
-						<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-normal">
-							<HugeiconsIcon icon={MailSettingIcon} className="text-primary size-6" />
-							Edit Template
-						</h1>
-						<p className="text-muted-foreground text-sm">
-							Update the email template content. A new version will be created and the cache will
-							be invalidated.
-						</p>
-					</div>
-				</div>
-				<Card>
-					<CardHeader>
-						<CardTitle>{template.key}</CardTitle>
-						<CardDescription>
-							Version {template.version} &middot; Last updated{" "}
-							{new Date(template.updatedAt).toLocaleDateString()}
-						</CardDescription>
+				<EditTemplateHeader onBack={navigateToTemplates} />
+				<Card className="gap-0">
+					<CardHeader className="border-b pb-5">
+						<TemplateCardHeader template={template} />
 					</CardHeader>
-					<CardContent>
+					<CardContent className="pt-6">
 						<EmailTemplateForm
 							template={template}
 							onSuccess={handleSuccess}
-							onCancel={handleCancel}
+							onCancel={navigateToTemplates}
 						/>
 					</CardContent>
 				</Card>
 			</div>
 		</>
+	);
+}
+
+function getBreadcrumbItems(currentPageName: string): BreadcrumbItem[] {
+	return [
+		{ name: "Dashboard", href: route.private.dashboard },
+		{ name: "Email Templates", href: route.private.emailTemplates },
+		{ name: currentPageName, isCurrent: true }
+	];
+}
+
+function PageMessage({ message }: { message: string }) {
+	return (
+		<div className="flex items-center justify-center py-24">
+			<p className="text-muted-foreground text-sm">{message}</p>
+		</div>
+	);
+}
+
+function TemplateNotFound({ onBack }: { onBack: () => void }) {
+	return (
+		<div className="flex flex-col items-center justify-center gap-4 py-24">
+			<p className="text-muted-foreground text-sm">Template not found.</p>
+			<Button type="button" variant="outline" onClick={onBack}>
+				<HugeiconsIcon icon={ArrowLeft01Icon} data-icon="inline-start" />
+				Back to Templates
+			</Button>
+		</div>
+	);
+}
+
+function EditTemplateHeader({ onBack }: { onBack: () => void }) {
+	return (
+		<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+			<div className="min-w-0">
+				<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-normal">
+					<HugeiconsIcon icon={MailSettingIcon} className="text-primary size-6" />
+					Edit Template
+				</h1>
+				<p className="text-muted-foreground text-sm">
+					Update the email template content. A new version will be created and the cache will be
+					invalidated.
+				</p>
+			</div>
+			<Button type="button" variant="outline" size="sm" onClick={onBack} className="self-start">
+				<HugeiconsIcon icon={ArrowLeft01Icon} data-icon="inline-start" />
+				Back to Templates
+			</Button>
+		</div>
+	);
+}
+
+function TemplateCardHeader({ template }: { template: EmailTemplate }) {
+	return (
+		<div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+			<div className="min-w-0">
+				<CardTitle className="truncate font-mono text-base">{template.key}</CardTitle>
+				<TemplateVersionDescription template={template} />
+			</div>
+			<Badge variant={template.isActive ? "default" : "outline"} className="self-start">
+				{template.isActive ? "Active" : "Inactive"}
+			</Badge>
+		</div>
+	);
+}
+
+function TemplateVersionDescription({ template }: { template: EmailTemplate }) {
+	return (
+		<CardDescription>
+			Version {template.version} &middot; Last updated {formatEmailTemplateDate(template.updatedAt)}
+		</CardDescription>
 	);
 }

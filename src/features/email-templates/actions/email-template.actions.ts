@@ -28,6 +28,13 @@ export async function listEmailTemplates(filters: EmailTemplateListQuery): Promi
 	});
 }
 
+export async function getEmailTemplate(publicId: string): Promise<EmailTemplate> {
+	return apiClient<EmailTemplate>({
+		method: "GET",
+		url: apiRoute.emailTemplate(publicId)
+	});
+}
+
 export async function updateEmailTemplate({
 	publicId,
 	...data

@@ -1,5 +1,6 @@
+import type { Metadata } from "next";
+
 import { EmailTemplateEditPage } from "@/features/email-templates/components/email-template-edit-page";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Edit Email Template",
@@ -10,6 +11,8 @@ interface PageProps {
 	params: Promise<{ publicId: string }>;
 }
 
-export default function Page({ params }: PageProps) {
-	return <EmailTemplateEditPage params={params} />;
+export default async function Page({ params }: PageProps) {
+	const { publicId } = await params;
+
+	return <EmailTemplateEditPage publicId={publicId} />;
 }

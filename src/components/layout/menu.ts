@@ -25,7 +25,7 @@ const userItems: NavUserMaxItemProps = [
 	}
 ];
 
-const navItem: NavItemProps[] = [
+const navPlatformItem: NavItemProps[] = [
 	{
 		title: "Dashboard",
 		url: route.private.dashboard,
@@ -37,19 +37,19 @@ const navItem: NavItemProps[] = [
 		url: route.private.users,
 		icon: UserGroupIcon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
-	},
+	}
+];
+
+const navSystemItem: NavItemProps[] = [
 	{
-		title: "SMTP Providers",
-		url: route.private.smtpProviders,
-		icon: Mail01Icon,
+		title: "System Settings",
+		url: route.private.system,
+		icon: Settings02Icon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
-	},
-	{
-		title: "Email Templates",
-		url: route.private.emailTemplates,
-		icon: MailSettingIcon,
-		roles: ["ADMIN", "SUPER_ADMIN"]
-	},
+	}
+];
+
+const navLogsItem: NavItemProps[] = [
 	{
 		title: "Email Logs",
 		url: route.private.emailLogs,
@@ -61,13 +61,22 @@ const navItem: NavItemProps[] = [
 		url: route.private.auditLogs,
 		icon: Audit01Icon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
+	}
+];
+
+const navSMTPItem: NavItemProps[] = [
+	{
+		title: "SMTP Providers",
+		url: route.private.smtpProviders,
+		icon: Mail01Icon,
+		roles: ["ADMIN", "SUPER_ADMIN"]
 	},
 	{
-		title: "System Settings",
-		url: route.private.system,
-		icon: Settings02Icon,
+		title: "Email Templates",
+		url: route.private.emailTemplates,
+		icon: MailSettingIcon,
 		roles: ["ADMIN", "SUPER_ADMIN"]
 	}
 ];
 
-export { navItem, userItems };
+export { navLogsItem, navPlatformItem, navSMTPItem, navSystemItem, userItems };
