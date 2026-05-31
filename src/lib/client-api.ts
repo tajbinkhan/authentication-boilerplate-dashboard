@@ -72,15 +72,24 @@ axiosClientApi.interceptors.request.use(
 axiosClientApi.interceptors.response.use(
 	response => response,
 	async (error: AxiosError) => {
-		// Handle 401 Unauthorized — session expired or invalid token
+		// Handle 401 Unauthorized — session expired or 2FA required
 		if (error.response?.status === 401 && !isRedirecting) {
 			isRedirecting = true;
 			// Clear CSRF cache since session is invalid
 			csrfTokenCache = null;
-			// Redirect to login with current page as redirect target
+
 			const currentPath = window.location.pathname + window.location.search;
-			const loginUrl = `${route.protected.login}?redirect=${encodeURIComponent(currentPath)}`;
-			window.location.replace(loginUrl);
+			const errorData = error.response?.data as { code?: string } | undefined;
+
+			// If 2FA is required, redirect to 2FA verify page instead of login
+			if (errorData?.code === "two_factor_required") {
+				const verifyUrl = `${route.protected.twoFactorVerify}?redirect=${encodeURIComponent(currentPath)}`;
+				window.location.replace(verifyUrl);
+			} else {
+				// Redirect to login with current page as redirect target
+				const loginUrl = `${route.protected.login}?redirect=${encodeURIComponent(currentPath)}`;
+				window.location.replace(loginUrl);
+			}
 			return Promise.reject(error);
 		}
 

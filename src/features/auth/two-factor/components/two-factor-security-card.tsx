@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import useAuth from "@/hooks/use-auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,7 @@ import { CodeDialog } from "./code-dialog";
 import { RecoveryCodesContent } from "./recovery-codes-content";
 
 export function TwoFactorSecurityCard() {
+	const { user, setUser } = useAuth();
 	const statusQuery = useTwoFactorStatusQuery();
 	const startSetupMutation = useStartTwoFactorSetupMutation();
 	const confirmSetupMutation = useConfirmTwoFactorSetupMutation();
@@ -87,8 +89,8 @@ export function TwoFactorSecurityCard() {
 			{
 				onSuccess: result => {
 					setRecoveryCodes(result.recoveryCodes);
+					if (user) setUser({ ...user, is2faEnabled: true });
 					toast.success("Two-factor authentication enabled");
-					window.location.reload();
 				},
 				onError: error => toast.error(getErrorMessage(error, "Failed to confirm 2FA setup"))
 			}
@@ -101,8 +103,8 @@ export function TwoFactorSecurityCard() {
 			{
 				onSuccess: () => {
 					toast.success("Two-factor authentication disabled");
+					if (user) setUser({ ...user, is2faEnabled: false, hasPassword: false });
 					setDisableOpen(false);
-					window.location.reload();
 				},
 				onError: error => toast.error(getErrorMessage(error, "Failed to disable 2FA"))
 			}

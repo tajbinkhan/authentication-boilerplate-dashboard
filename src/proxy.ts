@@ -1,11 +1,32 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { DEFAULT_LOGIN_REDIRECT, route } from "@/routes/routes";
+import { DEFAULT_LOGIN_REDIRECT, apiRoute, route } from "@/routes/routes";
 
 const AUTH_COOKIE_NAME = "access-token";
 const REQUIRES_2FA_COOKIE = "requires-2fa";
 const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
+
+async function validateSession(accessToken: string): Promise<boolean> {
+	const nestApiUrl = process.env.NEST_API_URL;
+	if (!nestApiUrl) return true;
+
+	try {
+		const baseUrl = nestApiUrl.endsWith("/") ? nestApiUrl : `${nestApiUrl}/`;
+		const response = await fetch(new URL(apiRoute.me, baseUrl), {
+			method: "GET",
+			headers: {
+				accept: "application/json",
+				cookie: `${AUTH_COOKIE_NAME}=${accessToken}`
+			},
+			cache: "no-store"
+		});
+
+		return response.ok;
+	} catch {
+		return true;
+	}
+}
 
 const PUBLIC_ROUTES = Object.values(route.public) as string[];
 const PRIVATE_ROUTES = Object.values(route.private) as string[];
@@ -65,7 +86,7 @@ export async function proxy(request: NextRequest) {
 	}
 
 	const hasAuthCookie = request.cookies.has(AUTH_COOKIE_NAME);
-	const requires2fa = request.cookies.has(REQUIRES_2FA_COOKIE);
+	const requires2fa = Boolean(request.cookies.get(REQUIRES_2FA_COOKIE)?.value);
 
 	// No auth cookie → unauthenticated
 	if (!hasAuthCookie) {
@@ -96,6 +117,20 @@ export async function proxy(request: NextRequest) {
 
 		// On 2FA verify route — let through
 		return NextResponse.next();
+	}
+
+	// Validate the session token before granting access to private routes
+	if (isPrivateRoute) {
+		const accessToken = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+		if (!accessToken || !(await validateSession(accessToken))) {
+			const loginUrl = new URL(route.protected.login, request.url);
+			loginUrl.searchParams.set("redirect", request.nextUrl.href);
+
+			const response = NextResponse.redirect(loginUrl);
+			response.cookies.delete(AUTH_COOKIE_NAME);
+			response.cookies.delete(REQUIRES_2FA_COOKIE);
+			return response;
+		}
 	}
 
 	// Authenticated user trying to access login/signup → redirect to dashboard
