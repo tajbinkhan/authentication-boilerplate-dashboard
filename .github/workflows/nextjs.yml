@@ -14,25 +14,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+          run_install: false
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "24" # Specify your preferred Node version
           cache: "pnpm" # Use pnpm cache since repo uses pnpm
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 11
-
-      - name: Ensure pnpm available
-        run: |
-          if ! command -v pnpm >/dev/null 2>&1; then
-            echo "pnpm not found — installing pnpm@11 globally as fallback"
-            npm install -g pnpm@11
-          else
-            echo "pnpm is available"
-          fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -48,4 +40,3 @@ jobs:
           NEXT_PUBLIC_FRONTEND_URL: ${{ secrets.NEXT_PUBLIC_FRONTEND_URL }}
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
           NEST_API_URL: ${{ secrets.NEST_API_URL }}
-
