@@ -28,6 +28,7 @@ export interface CodeDialogProps {
 	isPending: boolean;
 	actionLabel: string;
 	variant?: "default" | "destructive";
+	placeholder?: string;
 }
 
 export function CodeDialog({
@@ -38,7 +39,8 @@ export function CodeDialog({
 	onSubmit,
 	isPending,
 	actionLabel,
-	variant = "default"
+	variant = "default",
+	placeholder = "123456 or ABCDE-F1234"
 }: CodeDialogProps) {
 	const {
 		register,
@@ -72,7 +74,7 @@ export function CodeDialog({
 							id={`${actionLabel}-code`}
 							{...register("code")}
 							autoComplete="one-time-code"
-							placeholder="123456 or ABCDE-F1234"
+							placeholder={placeholder}
 							disabled={isPending}
 						/>
 					</Field>

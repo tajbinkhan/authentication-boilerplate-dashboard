@@ -4,10 +4,12 @@ export interface TwoFactorStatus {
 }
 
 export interface TwoFactorSetupStart {
-	otpauthUrl: string;
-	qrCodeDataUrl: string;
-	manualEntryKey: string;
-	expiresAt: string;
+	totpURI: string;
+	backupCodes: string[];
+}
+
+export interface TwoFactorSetupConfirmResponse {
+	user: unknown;
 }
 
 export interface TwoFactorRecoveryCodes {
@@ -19,8 +21,7 @@ export interface TwoFactorVerifyResponse {
 }
 
 export interface TwoFactorDisableResponse {
-	disabled: boolean;
-	revokedOtherSessionCount: number;
+	status: boolean;
 }
 
 export interface TwoFactorCodeInput {

@@ -5,6 +5,7 @@ import type {
 	TwoFactorCodeInput,
 	TwoFactorDisableResponse,
 	TwoFactorRecoveryCodes,
+	TwoFactorSetupConfirmResponse,
 	TwoFactorSetupStart,
 	TwoFactorStatus,
 	TwoFactorVerifyResponse
@@ -26,8 +27,8 @@ export function startTwoFactorSetup(): Promise<TwoFactorSetupStart> {
 
 export function confirmTwoFactorSetup({
 	code
-}: TwoFactorCodeInput): Promise<TwoFactorRecoveryCodes> {
-	return apiClient<TwoFactorRecoveryCodes>({
+}: TwoFactorCodeInput): Promise<TwoFactorSetupConfirmResponse> {
+	return apiClient<TwoFactorSetupConfirmResponse>({
 		method: "POST",
 		url: apiRoute.twoFactorSetupConfirm,
 		data: { code }
@@ -42,9 +43,7 @@ export function verifyTwoFactor({ code }: TwoFactorCodeInput): Promise<TwoFactor
 	});
 }
 
-export function disableTwoFactor({
-	code
-}: TwoFactorCodeInput): Promise<TwoFactorDisableResponse> {
+export function disableTwoFactor({ code }: TwoFactorCodeInput): Promise<TwoFactorDisableResponse> {
 	return apiClient<TwoFactorDisableResponse>({
 		method: "POST",
 		url: apiRoute.twoFactorDisable,

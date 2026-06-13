@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loading03Icon, LockKeyIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import Image from "next/image";
+import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -55,14 +55,15 @@ export function TwoFactorSecurityCard() {
 
 	const [setupOpen, setSetupOpen] = useState(false);
 	const [setup, setSetup] = useState<TwoFactorSetupStart | null>(null);
+	const [setupRecoveryCodes, setSetupRecoveryCodes] = useState<string[] | null>(null);
 	const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
 	const [disableOpen, setDisableOpen] = useState(false);
 	const [regenerateOpen, setRegenerateOpen] = useState(false);
 	const [recoveryOpen, setRecoveryOpen] = useState(false);
 
 	const {
-		register,
-		handleSubmit,
+		register: registerSetupCode,
+		handleSubmit: handleSubmitSetupCode,
 		reset: resetSetupForm
 	} = useForm<TwoFactorCodeFormValues>({
 		resolver: zodResolver(twoFactorCodeFormSchema),
@@ -72,9 +73,14 @@ export function TwoFactorSecurityCard() {
 	const enabled = Boolean(statusQuery.data?.enabled);
 
 	const handleStartSetup = () => {
+		startTwoFactorSetup();
+	};
+
+	const startTwoFactorSetup = () => {
 		startSetupMutation.mutate(undefined, {
 			onSuccess: result => {
 				setSetup(result);
+				setSetupRecoveryCodes(result.backupCodes);
 				resetSetupForm();
 				setRecoveryCodes(null);
 				setSetupOpen(true);
@@ -87,8 +93,9 @@ export function TwoFactorSecurityCard() {
 		confirmSetupMutation.mutate(
 			{ code: values.code },
 			{
-				onSuccess: result => {
-					setRecoveryCodes(result.recoveryCodes);
+				onSuccess: () => {
+					setRecoveryCodes(setupRecoveryCodes ?? []);
+					setSetupRecoveryCodes(null);
 					if (user) setUser({ ...user, is2faEnabled: true });
 					toast.success("Two-factor authentication enabled");
 				},
@@ -98,17 +105,14 @@ export function TwoFactorSecurityCard() {
 	};
 
 	const handleDisable = (values: TwoFactorCodeFormValues) => {
-		disableMutation.mutate(
-			{ code: values.code },
-			{
-				onSuccess: () => {
-					toast.success("Two-factor authentication disabled");
-					if (user) setUser({ ...user, is2faEnabled: false, hasPassword: false });
-					setDisableOpen(false);
-				},
-				onError: error => toast.error(getErrorMessage(error, "Failed to disable 2FA"))
-			}
-		);
+		disableMutation.mutate({ code: values.code }, {
+			onSuccess: () => {
+				toast.success("Two-factor authentication disabled");
+				if (user) setUser({ ...user, is2faEnabled: false, hasPassword: false });
+				setDisableOpen(false);
+			},
+			onError: error => toast.error(getErrorMessage(error, "Failed to disable 2FA"))
+		});
 	};
 
 	const handleRegenerate = (values: TwoFactorCodeFormValues) => {
@@ -132,6 +136,18 @@ export function TwoFactorSecurityCard() {
 		await navigator.clipboard.writeText(recoveryCodes.join("\n"));
 		toast.success("Recovery codes copied");
 	};
+
+	const closeSetupDialog = (open: boolean) => {
+		setSetupOpen(open);
+		if (!open) {
+			setSetup(null);
+			setSetupRecoveryCodes(null);
+			setRecoveryCodes(null);
+			resetSetupForm();
+		}
+	};
+
+	const manualEntryKey = setup ? getTotpManualEntryKey(setup.totpURI) : null;
 
 	return (
 		<>
@@ -161,7 +177,11 @@ export function TwoFactorSecurityCard() {
 								<Button type="button" variant="outline" onClick={() => setRegenerateOpen(true)}>
 									Regenerate recovery codes
 								</Button>
-								<Button type="button" variant="destructive" onClick={() => setDisableOpen(true)}>
+								<Button
+									type="button"
+									variant="destructive"
+									onClick={() => setDisableOpen(true)}
+								>
 									Disable 2FA
 								</Button>
 							</>
@@ -189,49 +209,59 @@ export function TwoFactorSecurityCard() {
 				</CardContent>
 			</Card>
 
-			<Dialog open={setupOpen} onOpenChange={setSetupOpen}>
+			<Dialog open={setupOpen} onOpenChange={closeSetupDialog}>
 				<DialogContent className="sm:max-w-xl" showCloseButton={!recoveryCodes?.length}>
 					{recoveryCodes?.length ? (
 						<RecoveryCodesContent
 							recoveryCodes={recoveryCodes}
 							onCopy={handleCopyRecoveryCodes}
 							onDone={() => {
-								setSetupOpen(false);
+								closeSetupDialog(false);
 								setRecoveryCodes(null);
 							}}
 						/>
 					) : (
-						<form onSubmit={handleSubmit(handleConfirmSetup)} className="grid gap-6">
+						<form onSubmit={handleSubmitSetupCode(handleConfirmSetup)} className="grid gap-6">
 							<DialogHeader>
 								<DialogTitle>Set up two-factor authentication</DialogTitle>
 								<DialogDescription>
-									Scan the QR code with your authenticator app, then enter the code.
+									Add the setup key to your authenticator app, then enter the code.
 								</DialogDescription>
 							</DialogHeader>
 							{setup ? (
 								<div className="grid gap-4">
-									<Image
-										src={setup.qrCodeDataUrl}
-										alt="Two-factor setup QR code"
-										width={192}
-										height={192}
-										unoptimized
-										className="mx-auto size-48 rounded-lg border bg-white p-2"
-									/>
+									<div className="mx-auto rounded-lg border bg-white p-3">
+										<QRCodeSVG
+											value={setup.totpURI}
+											size={192}
+											level="M"
+											marginSize={2}
+											title="Two-factor setup QR code"
+										/>
+									</div>
 									<Field>
 										<FieldLabel>Manual entry key</FieldLabel>
 										<div className="bg-muted text-foreground rounded-lg px-3 py-2 font-mono text-sm break-all">
-											{setup.manualEntryKey}
+											{manualEntryKey ?? setup.totpURI}
 										</div>
 										<FieldDescription>
-											This setup expires at {new Date(setup.expiresAt).toLocaleTimeString()}.
+											Use this key if your authenticator app asks for manual setup.
 										</FieldDescription>
+									</Field>
+									<Field>
+										<FieldLabel>Setup URI</FieldLabel>
+										<a
+											href={setup.totpURI}
+											className="bg-muted text-foreground rounded-lg px-3 py-2 font-mono text-sm break-all underline-offset-4 hover:underline"
+										>
+											{setup.totpURI}
+										</a>
 									</Field>
 									<Field>
 										<FieldLabel htmlFor="two-factor-setup-code">Authenticator code</FieldLabel>
 										<Input
 											id="two-factor-setup-code"
-											{...register("code")}
+											{...registerSetupCode("code")}
 											autoComplete="one-time-code"
 											placeholder="123456"
 											disabled={confirmSetupMutation.isPending}
@@ -258,11 +288,12 @@ export function TwoFactorSecurityCard() {
 				open={disableOpen}
 				onOpenChange={setDisableOpen}
 				title="Disable two-factor authentication"
-				description="Enter a current authenticator or recovery code."
+				description="Enter a current authenticator code. Password login will be removed from this account."
 				onSubmit={handleDisable}
 				isPending={disableMutation.isPending}
 				actionLabel="Disable 2FA"
 				variant="destructive"
+				placeholder="123456"
 			/>
 
 			<CodeDialog
@@ -293,4 +324,12 @@ export function TwoFactorSecurityCard() {
 
 function getErrorMessage(error: unknown, fallback: string): string {
 	return error instanceof Error ? error.message : fallback;
+}
+
+function getTotpManualEntryKey(totpURI: string): string | null {
+	try {
+		return new URL(totpURI).searchParams.get("secret");
+	} catch {
+		return null;
+	}
 }
