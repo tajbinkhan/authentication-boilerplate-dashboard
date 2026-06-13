@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { DEFAULT_LOGIN_REDIRECT, apiRoute, route } from "@/routes/routes";
 
-const AUTH_COOKIE_NAME = "access-token";
+const AUTH_COOKIE_NAME = "better-auth.session_token";
 const REQUIRES_2FA_COOKIE = "requires-2fa";
 const MAGIC_LINK_REDIRECT_COOKIE = "magic-link-redirect";
 
@@ -24,7 +24,7 @@ async function validateSession(accessToken: string): Promise<boolean> {
 
 		return response.ok;
 	} catch {
-		return true;
+		return false;
 	}
 }
 
@@ -133,8 +133,16 @@ export async function proxy(request: NextRequest) {
 		}
 	}
 
-	// Authenticated user trying to access login/signup → redirect to dashboard
 	if (isProtectedRoute) {
+		const accessToken = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+		if (!accessToken || !(await validateSession(accessToken))) {
+			const response = NextResponse.next();
+			response.cookies.delete(AUTH_COOKIE_NAME);
+			response.cookies.delete(REQUIRES_2FA_COOKIE);
+			return response;
+		}
+
+		// Authenticated user trying to access login/signup → redirect to dashboard
 		const response = NextResponse.redirect(resolvePostLoginRedirect(request));
 		response.cookies.delete(MAGIC_LINK_REDIRECT_COOKIE);
 		return response;

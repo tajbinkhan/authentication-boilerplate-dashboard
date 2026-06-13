@@ -1,19 +1,18 @@
 import { z } from "zod";
 
-import { userRoleValues } from "@/features/users/types/users.types";
 import {
 	validateBoolean,
 	validateEmail,
-	validateEnum,
 	validateOptionalPhoneNumber,
-	validateOptionalString
+	validateOptionalString,
+	validateString
 } from "@/validators/common-rule";
 
 const baseUserFormSchema = z.object({
 	name: validateOptionalString("Name", { max: 255 }),
 	email: validateEmail,
 	phone: validateOptionalPhoneNumber("Phone"),
-	role: validateEnum("Role", userRoleValues),
+	role: validateString("Role"),
 	emailVerified: validateBoolean("Email Verified"),
 	isApproved: validateBoolean("Approved").optional()
 });

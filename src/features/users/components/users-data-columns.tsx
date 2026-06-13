@@ -175,8 +175,7 @@ function UserIdentityCell({ user }: { user: ManagedUser }) {
 
 function UserRoleBadge({ role }: { role: UserRole }) {
 	const variant =
-		role === "SUPER_ADMIN" ? "destructive" : role === "ADMIN" ? "default" : "secondary";
+		role === "super_admin" ? "destructive" : role === "admin" ? "default" : "secondary";
 
 	return <Badge variant={variant}>{formatUserRole(role)}</Badge>;
 }
-

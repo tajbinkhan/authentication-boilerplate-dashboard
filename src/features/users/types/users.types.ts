@@ -1,5 +1,5 @@
-export type UserRole = "ADMIN" | "MANAGER" | "USER" | "SUPER_ADMIN";
-export const userRoleValues = ["ADMIN", "MANAGER", "USER", "SUPER_ADMIN"] as const;
+export type UserRole = string;
+export const userRoleValues = ["super_admin", "admin", "manager", "user"] as const;
 export const userSortValues = [
 	"name",
 	"email",
@@ -22,6 +22,7 @@ export interface ManagedUser {
 	emailVerified: boolean;
 	is2faEnabled: boolean;
 	role: UserRole;
+	roleId?: string | null;
 	activeSessionCount: number;
 	isApproved: boolean;
 	createdAt: string;

@@ -11,13 +11,13 @@ import type { UserRole } from "@/features/users/types/users.types";
 import { formatUserRole } from "@/features/users/utils/user-format";
 import { cn } from "@/lib/utils";
 
-const ROLES: UserRole[] = ["SUPER_ADMIN", "ADMIN", "MANAGER", "USER"];
+const ROLES: UserRole[] = ["super_admin", "admin", "manager", "user"];
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-	SUPER_ADMIN: "Full, unrestricted access to settings, databases, and configuration.",
-	ADMIN: "Manage users, view server stats, and configure settings.",
-	MANAGER: "Moderate access to views, profiles, and listings.",
-	USER: "Standard access to user-level dashboards and profile updates."
+	super_admin: "Full, unrestricted access to settings, databases, and configuration.",
+	admin: "Manage users, view server stats, and configure settings.",
+	manager: "Moderate access to views, profiles, and listings.",
+	user: "Standard access to user-level dashboards and profile updates."
 };
 
 interface RolePermissionsCardProps {
@@ -40,7 +40,7 @@ export function RolePermissionsCard({ allowedRoles, onToggleRole }: RolePermissi
 					<div className="flex flex-col gap-3">
 						{ROLES.map(role => {
 							const isChecked = allowedRoles.includes(role);
-							const isSuperAdmin = role === "SUPER_ADMIN";
+							const isSuperAdmin = role === "super_admin";
 
 							return (
 								<div
@@ -93,4 +93,3 @@ export function RolePermissionsCard({ allowedRoles, onToggleRole }: RolePermissi
 		</Card>
 	);
 }
-

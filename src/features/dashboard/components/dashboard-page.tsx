@@ -23,11 +23,18 @@ import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
 const roleColors: Record<string, string> = {
-	SUPER_ADMIN: "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
-	ADMIN: "bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
-	MANAGER: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-	USER: "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+	super_admin: "bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400",
+	admin: "bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
+	manager: "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+	user: "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400"
 };
+
+function formatRoleName(role: string): string {
+	return role
+		.split("_")
+		.map(part => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(" ");
+}
 
 function getSecurityScore(user: User): number {
 	let score = 0;
@@ -72,7 +79,7 @@ function DevicesIcon({ className }: { className?: string }) {
 
 export function DashboardPage() {
 	const { user } = useAuth();
-	const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+	const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 	const { activeSessionCount, recentAuditCount, isLoading } = useDashboardStats(
 		Boolean(user) && isAdmin
 	);
@@ -104,8 +111,8 @@ export function DashboardPage() {
 							Here&apos;s an overview of your account and security status.
 						</p>
 					</div>
-					<Badge className={roleColors[user.role] ?? roleColors.USER}>
-						{user.role.replace("_", " ")}
+					<Badge className={roleColors[user.role] ?? roleColors.user}>
+						{formatRoleName(user.role)}
 					</Badge>
 				</div>
 

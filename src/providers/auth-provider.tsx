@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState } from "react";
+import { createContext, useMemo, useState } from "react";
 
 interface AuthContextType {
 	user: User | null;
@@ -17,18 +17,18 @@ interface AuthProviderProps {
 }
 
 export default function AuthProvider({ children, user }: Readonly<AuthProviderProps>) {
-	const [updatedUser, setUpdatedUser] = useState<User | null>(user);
+	const [localUser, setLocalUser] = useState<User | null | undefined>(undefined);
+	const currentUser = localUser === undefined ? user : localUser;
 
-	return (
-		<AuthContext.Provider
-			value={{
-				user: updatedUser,
-				isAuthenticated: Boolean(updatedUser),
-				isLoading: false,
-				setUser: setUpdatedUser
-			}}
-		>
-			{children}
-		</AuthContext.Provider>
+	const value = useMemo(
+		() => ({
+			user: currentUser,
+			isAuthenticated: Boolean(currentUser),
+			isLoading: false,
+			setUser: setLocalUser
+		}),
+		[currentUser]
 	);
+
+	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

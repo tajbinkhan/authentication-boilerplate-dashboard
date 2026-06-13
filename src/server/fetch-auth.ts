@@ -5,12 +5,13 @@ import { cookies, headers } from "next/headers";
 import { apiRoute } from "@/routes/routes";
 
 const AUTH_USER_HEADER = "x-auth-user";
+const AUTH_COOKIE_NAME = "better-auth.session_token";
 
 /**
- * Fetches the current user from the API using a raw cookie string.
- * Used by the root layout with unstable_cache to avoid per-navigation API calls.
+ * Fetches the current user from the API using the better-auth session cookie.
+ * Auth is cookie-bound and must be resolved per request.
  */
-export async function fetchUserFromApi(cookieString: string): Promise<User | null> {
+export async function fetchUserFromApi(sessionToken: string): Promise<User | null> {
 	if (!process.env.NEXT_PUBLIC_API_URL) {
 		return null;
 	}
@@ -20,7 +21,7 @@ export async function fetchUserFromApi(cookieString: string): Promise<User | nul
 			method: "GET",
 			headers: {
 				accept: "application/json",
-				...(cookieString ? { cookie: cookieString } : {})
+				cookie: `${AUTH_COOKIE_NAME}=${sessionToken}`
 			},
 			cache: "no-store"
 		});

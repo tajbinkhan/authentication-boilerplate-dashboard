@@ -10,6 +10,7 @@ export const route = {
 		sessions: "/sessions",
 		auditLogs: "/audit-logs",
 		system: "/system",
+		rbac: "/rbac",
 		smtpProviders: "/smtp-providers",
 		emailTemplates: "/email-templates",
 		emailTemplateEdit: (publicId: string) => `/email-templates/${publicId}/edit`,
@@ -59,6 +60,11 @@ export const apiRoute = {
 	emailTemplates: "/email-templates",
 	emailTemplate: (publicId: string) => `/email-templates/${publicId}`,
 	emailLogs: "/email-logs",
+	rbacPermissions: "/rbac/permissions",
+	rbacRoles: "/rbac/roles",
+	rbacRole: (id: string) => `/rbac/roles/${id}`,
+	rbacRolePermissions: (id: string) => `/rbac/roles/${id}/permissions`,
+	rbacUserRole: (id: string) => `/rbac/users/${id}/role`,
 	emailLog: (logId: string) => `/email-logs/${logId}`,
 	emailLogResend: (logId: string) => `/email-logs/${logId}/resend`
 } as const;

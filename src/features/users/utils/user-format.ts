@@ -2,7 +2,7 @@ import { format } from "date-fns";
 
 import type { ManagedUser, UserRole } from "@/features/users/types/users.types";
 
-const manageableByAdmin = new Set<UserRole>(["USER", "MANAGER"]);
+const manageableByAdmin = new Set<UserRole>(["user", "manager"]);
 
 export function formatUserDate(value: string): string {
 	const date = new Date(value);
@@ -24,20 +24,20 @@ export function formatUserRole(role: UserRole): string {
 
 export function canManageUser(currentUser: User | null | undefined, target: ManagedUser): boolean {
 	if (!currentUser || currentUser.id === target.id) return false;
-	if (currentUser.role === "SUPER_ADMIN") return true;
-	return currentUser.role === "ADMIN" && manageableByAdmin.has(target.role);
+	if (currentUser.role === "super_admin") return true;
+	return currentUser.role === "admin" && manageableByAdmin.has(target.role);
 }
 
 export function getAssignableRoles(currentUser: User | null | undefined): UserRole[] {
 	if (!currentUser) return [];
-	if (currentUser.role === "SUPER_ADMIN") return ["SUPER_ADMIN", "ADMIN", "MANAGER", "USER"];
-	if (currentUser.role === "ADMIN") return ["MANAGER", "USER"];
+	if (currentUser.role === "super_admin") return ["super_admin", "admin", "manager", "user"];
+	if (currentUser.role === "admin") return ["manager", "user"];
 	return [];
 }
 
 export function getDefaultAssignableRole(currentUser: User | null | undefined): UserRole {
 	const assignableRoles = getAssignableRoles(currentUser);
-	return assignableRoles.includes("USER") ? "USER" : (assignableRoles[0] ?? "USER");
+	return assignableRoles.includes("user") ? "user" : (assignableRoles[0] ?? "user");
 }
 
 export function formatRevokedUserSessionsCount(count: number): string {
