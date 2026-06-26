@@ -218,6 +218,71 @@ export const validateDate = baseDate;
 export const validateArray = baseArray;
 export const validateUnion = baseUnion;
 
+// Query parameter validators
+export const firstQueryValue = (value: unknown): unknown => {
+	return Array.isArray(value) ? value[0] : value;
+};
+
+export const validateOptionalQueryString = z.preprocess(value => {
+	const nextValue = firstQueryValue(value);
+	if (typeof nextValue !== "string") return undefined;
+
+	const trimmed = nextValue.trim();
+	return trimmed || undefined;
+}, z.string().optional().catch(undefined));
+
+export const validateQueryDate = z.preprocess(
+	value => validateOptionalQueryString.parse(value),
+	z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/)
+		.optional()
+		.catch(undefined)
+);
+
+export const validateQueryNumber = (fallback: number, opts?: { max?: number }) => {
+	let schema = z.coerce.number().int().min(1);
+
+	if (opts?.max !== undefined) schema = schema.max(opts.max);
+
+	return z.preprocess(firstQueryValue, schema).optional().catch(fallback).default(fallback);
+};
+
+export const validateQueryEnum = <const T extends readonly [string, ...string[]]>(
+	name: string,
+	values: T,
+	fallback: T[number]
+) =>
+	z
+		.preprocess(firstQueryValue, baseEnum(name, values))
+		.optional()
+		.catch(fallback)
+		.default(fallback);
+
+export const validateOptionalQueryEnum = <const T extends readonly [string, ...string[]]>(
+	name: string,
+	values: T
+) => z.preprocess(firstQueryValue, baseEnum(name, values).optional()).catch(undefined);
+
+export const validateQueryBooleanString = (message: string) =>
+	validateOptionalQueryString.refine(value => !value || value === "true" || value === "false", {
+		message
+	});
+
+export const validateQueryUuid = z.preprocess(
+	value => validateOptionalQueryString.parse(value),
+	z.uuid().optional().catch(undefined)
+);
+
+export const validateCsvQueryEnum = <const T extends readonly string[]>(
+	values: T,
+	message: string
+) =>
+	validateOptionalQueryString.refine(
+		value => !value || value.split(",").every(item => values.includes(item.trim() as T[number])),
+		{ message }
+	);
+
 // Specialized validators for common patterns
 export const validateStringOrArray = (name: string, itemOpts?: Parameters<typeof baseString>[1]) =>
 	baseUnion(name, [
@@ -318,11 +383,7 @@ export const validateOptionalString = (name: string, opts?: { max?: number }) =>
 		})
 		.trim()
 		.max(opts?.max ?? 255, {
-			error: makeError(
-				name,
-				"limit",
-				zodMessages.error.limit.stringMax(name, opts?.max ?? 255)
-			)
+			error: makeError(name, "limit", zodMessages.error.limit.stringMax(name, opts?.max ?? 255))
 		});
 
 export const validateOptionalPhoneNumber = (name = "Phone") =>
