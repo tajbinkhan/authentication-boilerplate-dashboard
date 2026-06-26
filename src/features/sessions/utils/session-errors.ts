@@ -13,7 +13,7 @@ export function getSessionErrorMessage(error: unknown): string {
 		case "validation_failed":
 			return "Some session filters need attention.";
 		case "forbidden":
-			return "You do not have permission to manage this session.";
+			return "You do not have access to manage this session.";
 		default:
 			return error.message || "Session request failed. Please try again.";
 	}

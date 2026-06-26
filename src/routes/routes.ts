@@ -60,10 +60,8 @@ export const apiRoute = {
 	emailTemplates: "/email-templates",
 	emailTemplate: (publicId: string) => `/email-templates/${publicId}`,
 	emailLogs: "/email-logs",
-	rbacPermissions: "/rbac/permissions",
 	rbacRoles: "/rbac/roles",
 	rbacRole: (id: string) => `/rbac/roles/${id}`,
-	rbacRolePermissions: (id: string) => `/rbac/roles/${id}/permissions`,
 	rbacUserRole: (id: string) => `/rbac/users/${id}/role`,
 	emailLog: (logId: string) => `/email-logs/${logId}`,
 	emailLogResend: (logId: string) => `/email-logs/${logId}/resend`
@@ -75,5 +73,3 @@ const appRoutePrefix = process.env.NEXT_PUBLIC_FRONTEND_URL;
 const apiRoutePrefix = process.env.NEXT_PUBLIC_API_URL;
 
 export { apiRoutePrefix, appRoutePrefix, DEFAULT_LOGIN_REDIRECT };
-
-

@@ -1,28 +1,18 @@
 import { apiClient } from "@/lib/api/client";
-import { apiRoute } from "@/routes/routes";
 
 import type {
 	CreateRoleInput,
-	PermissionListResponse,
 	Role,
 	RoleListResponse,
-	UpdateRoleInput,
-	UpdateRolePermissionsInput
+	UpdateRoleInput
 } from "@/features/rbac/types/rbac.types";
+import { apiRoute } from "@/routes/routes";
 
 export function listRoles(): Promise<RoleListResponse> {
 	return apiClient<RoleListResponse>({
 		method: "GET",
 		url: apiRoute.rbacRoles,
 		params: { page: 1, pageSize: 100, sort: "name", dir: "asc" }
-	});
-}
-
-export function listPermissions(): Promise<PermissionListResponse> {
-	return apiClient<PermissionListResponse>({
-		method: "GET",
-		url: apiRoute.rbacPermissions,
-		params: { page: 1, pageSize: 500, sort: "resource", dir: "asc" }
 	});
 }
 
@@ -48,15 +38,3 @@ export function deleteRole(id: string): Promise<{ deleted: boolean }> {
 		url: apiRoute.rbacRole(id)
 	});
 }
-
-export function updateRolePermissions({
-	id,
-	permissionIds
-}: UpdateRolePermissionsInput): Promise<Role> {
-	return apiClient<Role>({
-		method: "PUT",
-		url: apiRoute.rbacRolePermissions(id),
-		data: { permissionIds }
-	});
-}
-

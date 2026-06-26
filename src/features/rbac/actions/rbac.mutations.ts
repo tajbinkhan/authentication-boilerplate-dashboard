@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { createRole, deleteRole, updateRole, updateRolePermissions } from "./rbac.actions";
+import { createRole, deleteRole, updateRole } from "./rbac.actions";
 import { rbacKeys } from "./rbac.keys";
 
 export function useCreateRoleMutation() {
@@ -35,15 +35,3 @@ export function useDeleteRoleMutation() {
 		}
 	});
 }
-
-export function useUpdateRolePermissionsMutation() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		mutationFn: updateRolePermissions,
-		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: rbacKeys.roles() });
-		}
-	});
-}
-

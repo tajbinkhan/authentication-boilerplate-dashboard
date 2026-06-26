@@ -7,27 +7,26 @@ import {
 	ShieldKeyIcon
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+
+import { ApiError } from "@/lib/api/errors";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { useRolesQuery, usePermissionsQuery } from "@/features/rbac/actions/rbac.queries";
+
 import {
 	useCreateRoleMutation,
 	useDeleteRoleMutation,
-	useUpdateRoleMutation,
-	useUpdateRolePermissionsMutation
+	useUpdateRoleMutation
 } from "@/features/rbac/actions/rbac.mutations";
-import type { Permission, Role } from "@/features/rbac/types/rbac.types";
-import { ApiError } from "@/lib/api/errors";
-import { cn } from "@/lib/utils";
+import { useRolesQuery } from "@/features/rbac/actions/rbac.queries";
+import type { Role } from "@/features/rbac/types/rbac.types";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
 
@@ -38,40 +37,13 @@ const breadcrumbItems = [
 
 export function RbacPage() {
 	const rolesQuery = useRolesQuery();
-	const permissionsQuery = usePermissionsQuery();
 	const [activeRoleId, setActiveRoleId] = useState<string | null>(null);
 	const [editingRole, setEditingRole] = useState<Role | null>(null);
 	const [createOpen, setCreateOpen] = useState(false);
-	const updatePermissionsMutation = useUpdateRolePermissionsMutation();
 	const deleteRoleMutation = useDeleteRoleMutation();
 
-	const roles = useMemo(() => rolesQuery.data?.rows ?? [], [rolesQuery.data?.rows]);
-	const permissions = useMemo(
-		() => permissionsQuery.data?.rows ?? [],
-		[permissionsQuery.data?.rows]
-	);
+	const roles = rolesQuery.data?.rows ?? [];
 	const activeRole = roles.find(role => role.id === activeRoleId) ?? roles[0] ?? null;
-	const groupedPermissions = useMemo(() => groupPermissions(permissions), [permissions]);
-	const activePermissionIds = new Set(activeRole?.permissions.map(permission => permission.id) ?? []);
-
-	const handleTogglePermission = (permissionId: string, checked: boolean) => {
-		if (!activeRole || activeRole.isSystem) return;
-
-		const next = new Set(activePermissionIds);
-		if (checked) {
-			next.add(permissionId);
-		} else {
-			next.delete(permissionId);
-		}
-
-		updatePermissionsMutation.mutate(
-			{ id: activeRole.id, permissionIds: [...next] },
-			{
-				onSuccess: () => toast.success("Permissions updated"),
-				onError: error => toast.error(getErrorMessage(error, "Failed to update permissions"))
-			}
-		);
-	};
 
 	const handleDeleteRole = (role: Role) => {
 		deleteRoleMutation.mutate(role.id, {
@@ -93,9 +65,7 @@ export function RbacPage() {
 							<HugeiconsIcon icon={ShieldKeyIcon} className="text-primary size-6" />
 							RBAC
 						</h1>
-						<p className="text-muted-foreground text-sm">
-							Manage table-backed roles and permission assignments.
-						</p>
+						<p className="text-muted-foreground text-sm">Manage table-backed roles.</p>
 					</div>
 					<Button size="sm" onClick={() => setCreateOpen(true)}>
 						<HugeiconsIcon icon={PlusSignCircleIcon} data-icon="inline-start" />
@@ -133,6 +103,11 @@ export function RbacPage() {
 												<span className="truncate text-sm font-medium">
 													{formatRoleName(role.name)}
 												</span>
+												{role.isSystem ? (
+													<span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] font-medium">
+														System
+													</span>
+												) : null}
 												{isActive ? (
 													<span className="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-[10px] font-medium">
 														Active
@@ -165,66 +140,58 @@ export function RbacPage() {
 									</div>
 								);
 							})}
-							{rolesQuery.isLoading ? <p className="text-muted-foreground text-sm">Loading roles...</p> : null}
+							{rolesQuery.isLoading ? (
+								<p className="text-muted-foreground text-sm">Loading roles...</p>
+							) : null}
 						</CardContent>
 					</Card>
 
 					<Card>
 						<CardHeader>
-							<CardTitle>{activeRole ? formatRoleName(activeRole.name) : "Permissions"}</CardTitle>
+							<CardTitle>{activeRole ? formatRoleName(activeRole.name) : "Role Details"}</CardTitle>
 							<CardDescription>
 								{activeRole?.isSystem
-									? "System role permissions are seed-managed."
-									: "Toggle permissions for the selected custom role."}
+									? "System roles are managed by the seed process."
+									: "Review and edit the selected custom role."}
 							</CardDescription>
 						</CardHeader>
-						<CardContent>
-							<ScrollArea className="h-[620px] pr-3">
-								<div className="grid gap-4">
-									{groupedPermissions.map(group => (
-										<div key={group.resource} className="rounded-md border">
-											<div className="bg-muted/30 border-b px-3 py-2 text-sm font-medium">
-												{formatRoleName(group.resource)}
-											</div>
-											<div className="grid gap-2 p-3">
-												{group.permissions.map(permission => (
-													<label
-														key={permission.id}
-														className="flex items-start gap-3 rounded-md p-2 hover:bg-muted/30"
-													>
-														<Checkbox
-															checked={activePermissionIds.has(permission.id)}
-															disabled={!activeRole || activeRole.isSystem}
-															onCheckedChange={checked =>
-																handleTogglePermission(permission.id, checked === true)
-															}
-														/>
-														<span className="grid gap-0.5">
-															<span className="text-sm font-medium">{permission.name}</span>
-															<span className="text-muted-foreground text-xs">
-																{permission.description}
-															</span>
-														</span>
-													</label>
-												))}
-											</div>
-										</div>
-									))}
-								</div>
-							</ScrollArea>
+						<CardContent className="grid gap-4 text-sm">
+							{activeRole ? (
+								<>
+									<div className="grid gap-1">
+										<span className="text-muted-foreground text-xs font-medium uppercase">
+											Name
+										</span>
+										<span>{activeRole.name}</span>
+									</div>
+									<div className="grid gap-1">
+										<span className="text-muted-foreground text-xs font-medium uppercase">
+											Description
+										</span>
+										<span>{activeRole.description ?? "No description"}</span>
+									</div>
+									<div className="grid gap-1">
+										<span className="text-muted-foreground text-xs font-medium uppercase">
+											Type
+										</span>
+										<span>{activeRole.isSystem ? "System" : "Custom"}</span>
+									</div>
+								</>
+							) : (
+								<p className="text-muted-foreground">No role selected.</p>
+							)}
 						</CardContent>
 					</Card>
 				</div>
 			</div>
 
-			<RoleFormSheet open={createOpen} onOpenChange={setCreateOpen} permissions={permissions} />
+			<RoleFormSheet open={createOpen} onOpenChange={setCreateOpen} />
 			<RoleFormSheet
 				open={Boolean(editingRole)}
 				onOpenChange={open => {
 					if (!open) setEditingRole(null);
 				}}
 				role={editingRole}
-				permissions={permissions}
 			/>
 		</>
 	);
@@ -233,19 +200,16 @@ export function RbacPage() {
 function RoleFormSheet({
 	open,
 	onOpenChange,
-	role,
-	permissions
+	role
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	role?: Role | null;
-	permissions: Permission[];
 }) {
 	const createRoleMutation = useCreateRoleMutation();
 	const updateRoleMutation = useUpdateRoleMutation();
 	const [name, setName] = useState(role?.name ?? "");
 	const [description, setDescription] = useState(role?.description ?? "");
-	const [permissionIds, setPermissionIds] = useState<string[]>(role?.permissions.map(item => item.id) ?? []);
 
 	const isEditing = Boolean(role);
 	const isPending = createRoleMutation.isPending || updateRoleMutation.isPending;
@@ -272,7 +236,7 @@ function RoleFormSheet({
 		}
 
 		createRoleMutation.mutate(
-			{ name: nextName, description: description.trim() || null, permissionIds },
+			{ name: nextName, description: description.trim() || null },
 			{
 				onSuccess: () => {
 					toast.success("Role created");
@@ -290,7 +254,6 @@ function RoleFormSheet({
 				if (nextOpen) {
 					setName(role?.name ?? "");
 					setDescription(role?.description ?? "");
-					setPermissionIds(role?.permissions.map(item => item.id) ?? []);
 				}
 				onOpenChange(nextOpen);
 			}}
@@ -318,54 +281,21 @@ function RoleFormSheet({
 							disabled={isPending}
 						/>
 					</div>
-					{!isEditing ? (
-						<div className="grid gap-2">
-							<Label>Initial Permissions</Label>
-							<div className="grid max-h-72 gap-2 overflow-y-auto rounded-md border p-2">
-								{permissions.map(permission => (
-									<label key={permission.id} className="flex items-start gap-2 p-1">
-										<Checkbox
-											checked={permissionIds.includes(permission.id)}
-											onCheckedChange={checked => {
-												setPermissionIds(current =>
-													checked === true
-														? [...new Set([...current, permission.id])]
-														: current.filter(id => id !== permission.id)
-												);
-											}}
-										/>
-										<span className="text-sm">{permission.name}</span>
-									</label>
-								))}
-							</div>
-						</div>
-					) : null}
 				</div>
 				<SheetFooter>
 					<Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
 						Cancel
 					</Button>
-					<Button onClick={handleSubmit} disabled={isPending || Boolean(role?.isSystem && name !== role.name)}>
+					<Button
+						onClick={handleSubmit}
+						disabled={isPending || Boolean(role?.isSystem && name !== role.name)}
+					>
 						{isPending ? "Saving..." : "Save"}
 					</Button>
 				</SheetFooter>
 			</SheetContent>
 		</Sheet>
 	);
-}
-
-function groupPermissions(permissions: Permission[]) {
-	const groups = new Map<string, Permission[]>();
-	for (const permission of permissions) {
-		const current = groups.get(permission.resource) ?? [];
-		current.push(permission);
-		groups.set(permission.resource, current);
-	}
-
-	return [...groups.entries()].map(([resource, groupPermissions]) => ({
-		resource,
-		permissions: groupPermissions
-	}));
 }
 
 function formatRoleName(value: string): string {

@@ -9,7 +9,7 @@ export function getEmailLogErrorMessage(error: unknown): string {
 		case "unauthorized":
 			return "Please sign in again to view email logs.";
 		case "forbidden":
-			return "You do not have permission to view email logs.";
+			return "You do not have access to view email logs.";
 		case "validation_failed":
 			return "Some email log filters need attention.";
 		case "email_log_not_found":

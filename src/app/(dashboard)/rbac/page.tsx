@@ -4,10 +4,9 @@ import { RbacPage } from "@/features/rbac/components/rbac-page";
 
 export const metadata: Metadata = {
 	title: "RBAC",
-	description: "Manage roles and permissions."
+	description: "Manage roles."
 };
 
 export default function Page() {
 	return <RbacPage />;
 }
-

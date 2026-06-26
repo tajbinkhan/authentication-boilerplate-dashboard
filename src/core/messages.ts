@@ -9,7 +9,7 @@ export const authMessages = {
 		passwordChange: "Password change successful. Your password has been updated.",
 		tokenRefresh: "Token refresh successful. You are still logged in.",
 		tokenValid: "Token is valid. You are authenticated.",
-		authorizationGranted: "Access granted. You have the necessary permissions.",
+		authorizationGranted: "Access granted. You have the necessary role.",
 		emailVerificationSent: "Email verification sent. Please check your inbox.",
 		sessionUpdated: "Session updated. You are still logged in."
 	},
@@ -58,7 +58,7 @@ export const authMessages = {
 		authorization: {
 			insufficientRole: "Access denied. You do not have the necessary role.",
 			insufficientRoles: "Access denied. You do not have the necessary roles.",
-			insufficientPermissions: "Access denied. You do not have the necessary permissions.",
+			insufficientAccess: "Access denied. You do not have the necessary access.",
 			sessionExpired: "Access denied. Your session has expired.",
 			notAuthenticated: "Access denied. You are not authenticated.",
 			serverError: "Access denied. Server error occurred."

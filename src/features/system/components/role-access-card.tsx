@@ -3,13 +3,15 @@
 import { LockIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import { cn } from "@/lib/utils";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FieldLegend, FieldSet } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
+
 import type { UserRole } from "@/features/users/types/users.types";
 import { formatUserRole } from "@/features/users/utils/user-format";
-import { cn } from "@/lib/utils";
 
 const ROLES: UserRole[] = ["super_admin", "admin", "manager", "user"];
 
@@ -20,12 +22,12 @@ const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
 	user: "Standard access to user-level dashboards and profile updates."
 };
 
-interface RolePermissionsCardProps {
+interface RoleAccessCardProps {
 	allowedRoles: UserRole[];
 	onToggleRole: (role: UserRole) => void;
 }
 
-export function RolePermissionsCard({ allowedRoles, onToggleRole }: RolePermissionsCardProps) {
+export function RoleAccessCard({ allowedRoles, onToggleRole }: RoleAccessCardProps) {
 	return (
 		<Card className="border-border/50 pt-0 shadow-sm">
 			<CardHeader className="border-border/10 bg-muted/20 border-b pt-6">

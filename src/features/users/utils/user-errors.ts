@@ -13,7 +13,7 @@ export function getUserErrorMessage(error: unknown): string {
 		case "validation_failed":
 			return "Some user filters need attention.";
 		case "forbidden":
-			return "You do not have permission to manage this user.";
+			return "You do not have access to manage this user.";
 		default:
 			return error.message || "User request failed. Please try again.";
 	}

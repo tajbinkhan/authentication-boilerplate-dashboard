@@ -9,7 +9,7 @@ export function getAuditLogErrorMessage(error: unknown): string {
 		case "unauthorized":
 			return "Please sign in again to view audit logs.";
 		case "forbidden":
-			return "You do not have permission to view audit logs.";
+			return "You do not have access to view audit logs.";
 		case "validation_failed":
 			return "Some audit log filters need attention.";
 		default:

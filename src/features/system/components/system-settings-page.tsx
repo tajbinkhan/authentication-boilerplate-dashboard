@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+
 import { AccessModelCard } from "@/features/system/components/access-model-card";
-import { RolePermissionsCard } from "@/features/system/components/role-permissions-card";
+import { RoleAccessCard } from "@/features/system/components/role-access-card";
 import { useSystemSettingsForm } from "@/features/system/hooks/use-system-settings-form";
 import { SetBreadcrumb } from "@/providers/breadcrumb-provider";
 import { route } from "@/routes/routes";
@@ -86,7 +87,7 @@ export function SystemSettingsPage() {
 						<h1 className="font-heading text-2xl font-semibold">System Settings</h1>
 					</div>
 					<p className="text-muted-foreground text-sm">
-						Configure access controls and role permissions for your application.
+						Configure access controls and dashboard roles for your application.
 					</p>
 				</div>
 
@@ -111,7 +112,7 @@ export function SystemSettingsPage() {
 				{!isLoading && !isError && settings && (
 					<div className="grid gap-6 md:grid-cols-2">
 						<AccessModelCard value={accessModel} onChange={setAccessModel} />
-						<RolePermissionsCard allowedRoles={allowedRoles} onToggleRole={toggleRole} />
+						<RoleAccessCard allowedRoles={allowedRoles} onToggleRole={toggleRole} />
 					</div>
 				)}
 
@@ -141,4 +142,3 @@ export function SystemSettingsPage() {
 		</>
 	);
 }
-
